@@ -153,4 +153,5 @@ PyVALION.plotting.plot_individual_mean_residuals(res_ion,
 ![Residuals](docs/figures/IonRes_hmF2.png)
 
 # Learn More
-See the tutorials folder for an example that validates NmF2 and hmF2 from PyIRI.
+
+See the [tutorials](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/tutorials) folder for an example that validates NmF2 and hmF2 from [PyIRI](https://github.com/victoriyaforsythe/PyIRI).
