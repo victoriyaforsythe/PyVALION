@@ -520,27 +520,23 @@ def find_model_data(field, G):
     """
 
     # check that G is compatible with field
-    if ((field.shape[0] != G.shape[1])
-        | (field.shape[1] != G.shape[2])
-        | (field.shape[2] != G.shape[3])):
-          
-          flag = 'Error: G and filed are not compatable.'
-          logger.error(flag)
-
-    # Before G and filed can be multiplied, we need to reshape them into
-    # [N_obs, N_filed] and [N_field] where N_field is a size of a flattened
-    # array that combines time and horizontal grid dimmentions
-    nht = G.shape[1] * G.shape[2] * G.shape[3]
-
-    G_reshaped = np.reshape(G, (G.shape[0], nht))
-    field_reshaped = np.reshape(field, (nht))
-
-    # Replace nans with zeros (NIMO1 forecast has nans)
-    field_reshaped = np.nan_to_num(field_reshaped)
-
-    # Multiply G matrix and model field matrix
-    model_data = np.matmul(G_reshaped, field_reshaped)
-
+    if (field.shape[0: 2] == G.shape[1:3]):
+        # Before G and filed can be multiplied, we need to reshape them into
+        # [N_obs, N_filed] and [N_field] where N_field is a size of a flattened
+        # array that combines time and horizontal grid dimmentions
+        nht = G.shape[1] * G.shape[2] * G.shape[3]
+    
+        G_reshaped = np.reshape(G, (G.shape[0], nht))
+        field_reshaped = np.reshape(field, (nht))
+    
+        # Replace nans with zeros (NIMO1 forecast has nans)
+        field_reshaped = np.nan_to_num(field_reshaped)
+    
+        # Multiply G matrix and model field matrix
+        model_data = np.matmul(G_reshaped, field_reshaped)
+    else:
+        flag = 'Error: G and filed are not compatable.'
+        logger.error(flag)
     return model_data
 
 
