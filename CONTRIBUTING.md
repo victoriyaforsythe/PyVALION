@@ -16,8 +16,7 @@ Short version
 Bug reports
 -----------
 
-When [reporting a bug](https://github.com/victoriyaforsythe/PyVALION/issues) please
-include:
+When reporting a bug please include:
 
 * Your operating system name and version
 
