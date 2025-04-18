@@ -118,38 +118,8 @@ def download_GIRO_parameters(time_start,
         for line in str_arr:
             line_arr = line.split()
             if len(line_arr) == 14:
-                try:
-                    data_stamp = '%Y-%m-%dT%H:%M:%S.000Z'
-                    stamp = datetime.datetime.strptime(line_arr[0], data_stamp)
-                except Exception:
-                    stamp = np.nan
-                    logger.error('nan in data_stamp')
-                try:
-                    score = float(line_arr[1])
-                except Exception:
-                    score = np.nan
-                    logger.error('line_arr[1] is not float')
-                try:
-                    fof2 = float(line_arr[2])
-                except Exception:
-                    fof2 = np.nan
-                    logger.error('fof2 is nan')
-                try:
-                    hmf2 = float(line_arr[6])
-                except Exception:
-                    hmf2 = np.nan
-                    logger.error('hmf2 is nan')
-                try:
-                    B0 = float(line_arr[10])
-                except Exception:
-                    B0 = np.nan
-                    logger.error('B0 is nan')
-                try:
-                    B1 = float(line_arr[12])
-                except Exception:
-                    B1 = np.nan
-                    logger.error('B1 is nan')
-
+                stamp, score, fof2, hmf2, B0, B1 = read_GIRO_line(line_arr)
+                # Concatenate variables into arrays
                 adtime = np.concatenate((adtime, stamp), axis=None)
                 ascore = np.concatenate((ascore, score), axis=None)
                 afof2 = np.concatenate((afof2, fof2), axis=None)
@@ -210,7 +180,7 @@ def download_GIRO_parameters(time_start,
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def read_GIRO_file(line_arr):
+def read_GIRO_line(line_arr):
     """Reads 14-element line from GIRO ionosonde file.
 
     Parameters
