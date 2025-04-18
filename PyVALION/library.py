@@ -525,13 +525,13 @@ def find_model_data(field, G):
         # [N_obs, N_filed] and [N_field] where N_field is a size of a flattened
         # array that combines time and horizontal grid dimmentions
         nht = G.shape[1] * G.shape[2] * G.shape[3]
-    
+
         G_reshaped = np.reshape(G, (G.shape[0], nht))
         field_reshaped = np.reshape(field, (nht))
-    
+
         # Replace nans with zeros (NIMO1 forecast has nans)
         field_reshaped = np.nan_to_num(field_reshaped)
-    
+
         # Multiply G matrix and model field matrix
         model_data = np.matmul(G_reshaped, field_reshaped)
     else:
@@ -709,7 +709,7 @@ units['NmF2'] = 'm$^{-3}$'
 units['hmF2'] = 'km'
 
 PyVALION.logger.info('The model output has the following', len(model),
-      'parameters with shape (N_time, N_lat, N_lon): ')
+                     'parameters with shape (N_time, N_lat, N_lon): ')
 for key in model:
     PyVALION.logger.info(key, ', shape ', model[key].shape)
 
