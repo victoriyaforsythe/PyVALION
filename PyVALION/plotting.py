@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.mpl.ticker as cticker
 
+
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def plot_ionosondes(y_instr_info,
