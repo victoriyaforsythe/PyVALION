@@ -24,13 +24,13 @@ __version__ = metadata.version('PyVALION')
 # Determine the coefficient root directory
 if osflag:
     giro_names_dir = os.path.join(os.path.realpath(os.path.dirname(__file__)),
-                             'giro_names')
+                                  'giro_names')
 else:
     giro_names_dir = str(resources.files(__package__).joinpath('giro_names'))
-    
+
 if osflag:
     giro_data_dir = os.path.join(os.path.realpath(os.path.dirname(__file__)),
-                             'giro_data')
+                                 'giro_data')
 else:
     giro_data_dir = str(resources.files(__package__).joinpath('giro_data'))
 
