@@ -92,11 +92,10 @@ def download_GIRO_parameters(time_start,
                                        file_name_str + '.p')
 
         # String for wget in GIRO-desired format
-        url = ("https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=" +
-               ionosonde + "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=" +
-               time_start.strftime('%Y/%m/%d+%H:%M:%S') +
-               "&toDate=" +
-               time_finish.strftime('%Y/%m/%d+%H:%M:%S'))
+        url = ("https://lgdc.uml.edu/common/DIDBGetValues?ursiCode="
+               + ionosonde + "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate="
+               + time_start.strftime('%Y/%m/%d+%H:%M:%S')
+               + "&toDate=" + time_finish.strftime('%Y/%m/%d+%H:%M:%S'))
 
         # Run wget
         subprocess.run(["wget", "-O", output_file_txt, url, '-q'])
@@ -257,11 +256,11 @@ def filter_GIRO_parameters(time_start,
         ionosonde = ion_name[iion]
 
         # Save downloaded file as
-        file_name_str = (ionosonde +
-                         '_' +
-                         time_start.strftime('%Y%m%dT%H%MZ') +
-                         '_' +
-                         time_finish.strftime('%Y%m%dT%H%MZ') + '.p')
+        file_name_str = (ionosonde
+                         + '_'
+                         + time_start.strftime('%Y%m%dT%H%MZ')
+                         + '_'
+                         + time_finish.strftime('%Y%m%dT%H%MZ') + '.p')
 
         imput_file_pic = os.path.join(save_dir, file_name_str)
         data = pickle.load(open(imput_file_pic, 'rb'))
