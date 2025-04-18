@@ -8,8 +8,7 @@ contributions.
 Short version
 -------------
 
-* Submit bug reports and feature requests at
-  [GitHub](https://github.com/victoriyaforsythe/PyVALION/issues)
+* Submit bug reports and feature requests at GitHub
 
 * Make pull requests to the ``develop`` branch
 
