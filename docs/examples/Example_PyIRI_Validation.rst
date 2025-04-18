@@ -129,13 +129,13 @@ If you need to exclude certain ionosondes, modify the giro_name['name'] array.
 ::
 
     raw_data = PyVALION.library.download_GIRO_parameters(atime[0],
-                                                        atime[-1],
-                                                        giro_name['name'],
-                                                        data_save_dir,
-                                                        save_res_dir,
-                                                        name_run,
-                                                        clean_directory=True,
-                                                        filter_CS=90)
+                                                         atime[-1],
+                                                         giro_name['name'],
+                                                         data_save_dir,
+                                                         save_res_dir,
+                                                         name_run,
+                                                         clean_directory=True,
+                                                         filter_CS=90)
 
 
 11. Create a forward operator for the ionosonde dataset using the given model
@@ -144,19 +144,22 @@ grid.
 ::
 
     obs_data, obs_units, G, obs_info = PyVALION.library.find_G_and_y(atime,
-                                                                    alon,
-                                                                    alat,
-                                                                    raw_data,
-                                                                    save_res_dir,
-                                                                    name_run,
-                                                                    True)
+                                                                     alon,
+                                                                     alat,
+                                                                     raw_data,
+                                                                     save_res_dir,
+                                                                     name_run,
+                                                                     True)
 
 12. Find residuals between the observed data and model forecast.
 
 ::
 
-    model_data, residuals, model_units, res_ion = PyVALION.library.find_residuals(
-        model, G, obs_data, obs_info, units)
+    model_data, residuals, model_units, res_ion = PyVALION.library.find_residuals(model,
+                                                                                  G,
+                                                                                  obs_data,
+                                                                                  obs_info,
+                                                                                  units)
 
 13. Create a map showing the locations of GIRO ionosondes used on the selected 
 validation day.
@@ -164,9 +167,9 @@ validation day.
 ::
 
     PyVALION.plotting.plot_ionosondes(obs_info,
-                                    dtime,
-                                    save_res_dir,
-                                    plot_name='Ionosondes_Map')
+                                      dtime,
+                                      save_res_dir,
+                                      plot_name='Ionosondes_Map')
 
 .. image:: /docs/figures/Ionosonde_Map.png
     :width: 600px
@@ -178,10 +181,10 @@ validation day.
 ::
 
     PyVALION.plotting.plot_histogram(residuals,
-                                    model_units,
-                                    dtime,
-                                    save_res_dir,
-                                    plot_name='Residuals')
+                                     model_units,
+                                     dtime,
+                                     save_res_dir,
+                                     plot_name='Residuals')
 
 .. image:: /docs/figures/Residuals.png
     :width: 600px
@@ -194,11 +197,11 @@ each ionosonde
 ::
 
     PyVALION.plotting.plot_individual_mean_residuals(res_ion,
-                                                    obs_info,
-                                                    model_units,
-                                                    dtime,
-                                                    save_res_dir,
-                                                    plot_name='IonRes')
+                                                     obs_info,
+                                                     model_units,
+                                                     dtime,
+                                                     save_res_dir,
+                                                     plot_name='IonRes')
 
 .. image:: /docs/figures/IonRes_NmF2.png
     :width: 600px
