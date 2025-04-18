@@ -82,11 +82,9 @@ def download_GIRO_parameters(time_start,
         ind_giro = np.where(giro_name['name'] == ionosonde)[0]
 
         # Save downloaded file as
-        file_name_str = (ionosonde +
-                         '_' +
-                         time_start.strftime('%Y%m%dT%H%MZ') +
-                         '_' +
-                         time_finish.strftime('%Y%m%dT%H%MZ'))
+        file_name_str = (ionosonde
+                         + '_' + time_start.strftime('%Y%m%dT%H%MZ')
+                         + '_' + time_finish.strftime('%Y%m%dT%H%MZ'))
 
         output_file_txt = os.path.join(data_save_dir,
                                        file_name_str + '.txt')
