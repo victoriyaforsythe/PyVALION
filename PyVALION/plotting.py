@@ -6,12 +6,12 @@
 # ---------------------------------------------------------
 """This library contains components visualization routines for PyIRI."""
 
-import matplotlib.pyplot as plt
-import numpy as np
 import os
+
+import numpy as np
+import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.mpl.ticker as cticker
-
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
