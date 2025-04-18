@@ -426,7 +426,7 @@ def find_G_and_y(adtime,
     ay_name = np.empty((0))
 
     # Cycle through the array of time frames in a selected day
-    print('Forming observation vectors:')
+    PyVALION.logger.info('Forming observation vectors:')
     for it in range(0, adtime.size):
         a = np.where((data['dtime'] >= adtime0[it])
                      & (data['dtime'] < adtime1[it]))[0]
@@ -462,18 +462,18 @@ def find_G_and_y(adtime,
     # Convert frequency to density in cm-3
     ay_nmf2 = PyVALION.library.freq2den(ay_fof2)
 
-    print('Observation vector y has N_obs = ', ay_nmf2.size)
+    PyVALION.logger.info('Observation vector y has N_obs = ', ay_nmf2.size)
     # Make array for geometry matrix
     G = np.zeros((ay_name.size, adtime.size, alat.size, alon.size))
 
-    print('Forming G:')
+    PyVALION.logger.info('Forming G:')
     for iob in range(0, ay_name.size):
         it = np.where(adtime == ay_time[iob])[0][0]
         ind_lon = PyVALION.library.nearest_element(alon, ay_lon[iob])
         ind_lat = PyVALION.library.nearest_element(alat, ay_lat[iob])
         G[iob, it, ind_lat, ind_lon] = 1.
 
-    print('G has shape [N_obs, N_time, N_lat, N_lon] = ', G.shape)
+    PyVALION.logger.info('G has shape [N_obs, N_time, N_lat, N_lon] = ', G.shape)
 
     # Write observation vectors to the dictionary
     y = {'fof2': ay_fof2, 'NmF2': ay_nmf2, 'hmF2': ay_hmf2, 'B0': ay_B0,
@@ -652,7 +652,7 @@ day = 1
 
 # Create a datetime object for the selected day
 dtime = datetime.datetime(year, month, day)
-print('Validation day is: ', dtime)
+PyVALION.logger.info('Validation day is: ', dtime)
 
 # Create an array for the model's time resolution
 # In this example, we use 15-minute resolution
@@ -708,10 +708,10 @@ units = {}
 units['NmF2'] = 'm$^{-3}$'
 units['hmF2'] = 'km'
 
-print('The model output has the following', len(model),
+PyVALION.logger.info('The model output has the following', len(model),
       'parameters with shape (N_time, N_lat, N_lon): ')
 for key in model:
-    print(key, ', shape ', model[key].shape)
+    PyVALION.logger.info(key, ', shape ', model[key].shape)
 
 # IMPORTANT: Ensure that all arrays in the model dictionary have the same shape
 # otherwise, a single forward operator G cannot be applied to all of them
