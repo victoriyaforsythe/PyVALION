@@ -145,6 +145,8 @@ PyVALION.plotting.plot_individual_mean_residuals(res_ion,
 
 # Examples
 
+<img width="2000" height="2000" src="https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Ionosondes_Map.pdf" alt="Map with GIRO ionosonde locations" title="Ionosondes_Map" style="float:left;">
+
 ![Ionosondes_Map](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Ionosondes_Map.pdf)
 
 ![Residuals](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Residuals.pdf)
