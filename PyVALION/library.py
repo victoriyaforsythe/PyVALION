@@ -119,36 +119,36 @@ def download_GIRO_parameters(time_start,
             line_arr = line.split()
             if len(line_arr) == 14:
                 try:
-                  data_stamp = '%Y-%m-%dT%H:%M:%S.000Z'
-                  stamp = datetime.datetime.strptime(line_arr[0], data_stamp)
+                    data_stamp = '%Y-%m-%dT%H:%M:%S.000Z'
+                    stamp = datetime.datetime.strptime(line_arr[0], data_stamp)
                 except:
-                  stamp = np.nan
-                  logger.error('nan in data_stamp')
+                    stamp = np.nan
+                    logger.error('nan in data_stamp')
                 try:
-                  score = float(line_arr[1])
+                    score = float(line_arr[1])
                 except:
-                  score = np.nan
-                  logger.error('line_arr[1] is not float')
+                    score = np.nan
+                    logger.error('line_arr[1] is not float')
                 try:
-                  fof2 = float(line_arr[2])
+                    fof2 = float(line_arr[2])
                 except:
-                  fof2 = np.nan
-                  logger.error('fof2 is nan')
+                    fof2 = np.nan
+                    logger.error('fof2 is nan')
                 try:
-                  hmf2 = float(line_arr[6])
+                    hmf2 = float(line_arr[6])
                 except:
-                  hmf2 = np.nan
-                  logger.error('hmf2 is nan')
+                    hmf2 = np.nan
+                    logger.error('hmf2 is nan')
                 try:
-                  B0 = float(line_arr[10])
+                    B0 = float(line_arr[10])
                 except:
-                  B0 = np.nan
-                  logger.error('B0 is nan')
+                    B0 = np.nan
+                    logger.error('B0 is nan')
                 try:
-                  B1 = float(line_arr[12])
+                    B1 = float(line_arr[12])
                 except:
-                  B1 = np.nan
-                  logger.error('B1 is nan')
+                    B1 = np.nan
+                    logger.error('B1 is nan')
 
                 adtime = np.concatenate((adtime, stamp), axis=None)
                 ascore = np.concatenate((ascore, score), axis=None)
