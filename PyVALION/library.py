@@ -513,7 +513,8 @@ def find_G_and_y(adtime,
         ind_lat = PyVALION.library.nearest_element(alat, ay_lat[iob])
         G[iob, it, ind_lat, ind_lon] = 1.
 
-    PyVALION.logger.info('G has shape [N_obs, N_time, N_lat, N_lon] = ', G.shape)
+    PyVALION.logger.info('G has shape [N_obs, N_time, N_lat, N_lon] = ',
+                         G.shape)
 
     # Write observation vectors to the dictionary
     y = {'fof2': ay_fof2, 'NmF2': ay_nmf2, 'hmF2': ay_hmf2, 'B0': ay_B0,
