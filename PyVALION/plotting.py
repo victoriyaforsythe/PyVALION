@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import cartopy.mpl.ticker as cticker
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -121,6 +121,7 @@ def plot_histogram(residuals,
     plt.savefig(figname, bbox_inches='tight', facecolor='white')
     print('Figure Residuals is saved at: ', figname)
     return
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
