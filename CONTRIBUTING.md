@@ -28,8 +28,7 @@ include:
 Feature requests and feedback
 -----------------------------
 
-The best way to send feedback is to file an issue at
-[GitHub](https://github.com/victoriyaforsythe/PyVALION/issues).
+The best way to send feedback is to file an issue at GitHub.
 
 If you are proposing a feature:
 
