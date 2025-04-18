@@ -124,17 +124,22 @@ PyVALION.plotting.plot_ionosondes(obs_info,
                                   dtime,
                                   save_res_dir,
                                   plot_name='Ionosondes_Map.pdf')
-
+```
+![Ionosondes_Map](docs/figures/Ionosondes_Map.png)
 
 # Histogram of residuals
+```
 PyVALION.plotting.plot_histogram(residuals,
                                  model_units,
                                  dtime,
                                  save_res_dir,
                                  plot_name='Residuals.pdf')
+```
 
+![Residuals](docs/figures/Residuals.png)
 
 # Mean residuals for each ionosonde
+```
 PyVALION.plotting.plot_individual_mean_residuals(res_ion,
                                                  obs_info,
                                                  model_units,
@@ -142,13 +147,6 @@ PyVALION.plotting.plot_individual_mean_residuals(res_ion,
                                                  save_res_dir,
                                                  plot_name='IonRes.pdf')
 ```
-
-# Examples
-
-
-![Ionosondes_Map](docs/figures/Ionosondes_Map.png)
-
-![Residuals](docs/figures/Residuals.png)
 
 ![Residuals](docs/figures/IonRes_NmF2.png)
 
