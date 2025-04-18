@@ -29,18 +29,15 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install NEP29 dependencies
-      if: ${{ matrix.test_config == 'NEP29' }}
+      if: ${{ matrix.test_config == 'NEP29'}}
       run: |
         pip install numpy==${{ matrix.numpy_ver }}
         pip install --upgrade-strategy only-if-needed .[test]
 
     - name: Install standard dependencies
-      if: ${{ matrix.test_config == 'latest' }}
+      if: ${{ matrix.test_config == 'latest'}}
       run: |
         pip install .[test]
-
-    - name: Install Coveralls
-      run: pip install coveralls
 
     - name: Test PEP8 compliance
       run: flake8 . --count --select=D,E,F,H,W --show-source --statistics
@@ -54,21 +51,6 @@ jobs:
     - name: Test with pytest
       run: pytest --cov=PyVALION
 
-    - name: Publish results to Coveralls
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_PARALLEL: true
-      run: coveralls --rcfile=pyproject.toml --service=github
-
-  finish:
-    name: Finish Coverage Analysis
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install Coveralls
-      run: pip install coveralls
-
-    - name: Coveralls Finished
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: coveralls --finish
+    # Coveralls temporarily disabled
+    - name: Skip Coveralls
+      run: echo "Coveralls upload is disabled for now."
