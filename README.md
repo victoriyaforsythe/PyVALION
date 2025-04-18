@@ -1,4 +1,5 @@
-<img width="128" height="128" src="https://raw.githubusercontent.com/victoriyaforsythe/PyVALION/main/docs/figures/PyVALION_logo.png" alt="Black circle with PyVALION logo of a lion with ionospheric profile" title="PyVALION Logo" style="float:left;">
+<img width="128" height="128" src="https://raw.githubusercontent.com/victoriyaforsythe/PyVALION/main/docs/figures/PyVALION_logo.png" alt="Black circle with lion ionosoheric vertical profile" title="PyVALION Logo" style="float:left;">
+
 
 # PyVALION (Python VALidation for the IONosphere)
 [![PyVALION Package latest release](https://img.shields.io/pypi/v/PyVALION.svg)](https://pypi.org/project/PyVALION/)
