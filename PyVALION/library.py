@@ -121,32 +121,32 @@ def download_GIRO_parameters(time_start,
                 try:
                     data_stamp = '%Y-%m-%dT%H:%M:%S.000Z'
                     stamp = datetime.datetime.strptime(line_arr[0], data_stamp)
-                except:
+                except Exception:
                     stamp = np.nan
                     logger.error('nan in data_stamp')
                 try:
                     score = float(line_arr[1])
-                except:
+                except Exception:
                     score = np.nan
                     logger.error('line_arr[1] is not float')
                 try:
                     fof2 = float(line_arr[2])
-                except:
+                except Exception:
                     fof2 = np.nan
                     logger.error('fof2 is nan')
                 try:
                     hmf2 = float(line_arr[6])
-                except:
+                except Exception:
                     hmf2 = np.nan
                     logger.error('hmf2 is nan')
                 try:
                     B0 = float(line_arr[10])
-                except:
+                except Exception:
                     B0 = np.nan
                     logger.error('B0 is nan')
                 try:
                     B1 = float(line_arr[12])
-                except:
+                except Exception:
                     B1 = np.nan
                     logger.error('B1 is nan')
 
