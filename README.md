@@ -1,7 +1,7 @@
 <img width="200" height="200" src="https://github.com/victoriyaforsythe/PyVALION/blob/main/docs/figures/PyVALION_logo.png" alt="Black circle with lion ionosoheric vertical profile" title="PyVALION Logo" style="float:left;">
 
 
-# PyVALION (Python VALidation for the IONosphere)
+# PyVALION (Python VALidation for IONosphere)
 [![PyVALION Package latest release](https://img.shields.io/pypi/v/PyVALION.svg)](https://pypi.org/project/PyVALION/)
 [![Build Status](https://github.com/victoriyaforsythe/PyVALION/actions/workflows/main.yml/badge.svg)](https://github.com/victoriyaforsythe/PyVALION/actions/workflows/main.yml)
 [![Documentation Status](https://readthedocs.org/projects/pyvalion/badge/?version=latest)](https://pyiri.readthedocs.io/en/latest/?badge=latest)
