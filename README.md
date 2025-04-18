@@ -1,4 +1,4 @@
-<img width="128" height="128" src="https://raw.githubusercontent.com/victoriyaforsythe/PyVALION/main/docs/figures/PyVALION_logo.png" alt="Black circle with lion ionosoheric vertical profile" title="PyVALION Logo" style="float:left;">
+<img width="128" height="128" src="https://github.com/victoriyaforsythe/PyVALION/blob/main/docs/figures/PyVALION_logo.png" alt="Black circle with lion ionosoheric vertical profile" title="PyVALION Logo" style="float:left;">
 
 
 # PyVALION (Python VALidation for the IONosphere)
