@@ -180,7 +180,7 @@ def download_GIRO_parameters(time_start,
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def read_GIRO_line(line_arr):
-    """Reads 14-element line from GIRO ionosonde file.
+    """Read 14-element line from GIRO ionosonde file.
 
     Parameters
     ----------
@@ -222,7 +222,7 @@ def read_GIRO_line(line_arr):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def safe_float(line_arr, index, label):
-    """Reads 14-element line from GIRO ionosonde file.
+    """Check if element is float.
 
     Parameters
     ----------
