@@ -1,9 +1,7 @@
 Overview
 ========
 
-This is a package that implements the International Reference Ionosphere (IRI)
-model in Python.  This is a pure Python implementation that currently supports
-the core functionality of the IRI model.
+This is a tool to validate any ionospheric model that provides NmF2, hmF2, B1 and B0 parameters using GIRO ionosonde data.
 
 .. image:: figures/PyVALION_logo.png
     :width: 400px
