@@ -4,7 +4,7 @@ Application Programming Interface
 =================================
 
 
-.. automodule:: PyVALION.main_library
+.. automodule:: PyVALION.library
     :members:
 
 .. automodule:: PyVALION.plotting
