@@ -60,8 +60,8 @@ def plot_ionosondes(y_instr_info,
     ax_plot.coastlines(lw=0.5, color='black', zorder=1)
     ax_plot.scatter(y_instr_info['lon'], y_instr_info['lat'],
                     zorder=2, linewidth=0.5, edgecolor='black', c='red')
-    ax_plot.set_title('GIRO Ionosondes for Validation Period, ' +
-                      dtime.strftime('%Y%m%d'))
+    ax_plot.set_title('GIRO Ionosondes for Validation Period, '
+                      + dtime.strftime('%Y%m%d'))
 
     # Save figure
     figname = os.path.join(plot_dir, plot_name + '.pdf')
