@@ -1,3 +1,4 @@
+import numpy as np
 from PyVALION.library import nearest_element
 
 def test_nearest_element():
