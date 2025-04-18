@@ -1,8 +1,16 @@
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# ---------------EXAMPLE HOW TO USE PyVALION-----------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
+#!/usr/bin/env python
+# --------------------------------------------------------
+# Distribution statement A. Approved for public release.
+# Distribution is unlimited.
+# This work was supported by the Office of Naval Research.
+# --------------------------------------------------------
+"""Example of PyIRI module validation.
+
+"""
+
+import PyIRI
+import PyVALION
+
 # In this example, we will create a model output using the PyIRI module
 # You can provide your own model output for the validation
 
