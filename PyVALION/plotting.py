@@ -64,7 +64,7 @@ def plot_ionosondes(y_instr_info,
                       dtime.strftime('%Y%m%d'))
 
     # Save figure
-    figname = os.path.join(plot_dir, plot_name  + '.pdf')
+    figname = os.path.join(plot_dir, plot_name + '.pdf')
     plt.savefig(figname, bbox_inches='tight', facecolor='white')
     print('Figure Ionosonde Map is saved at: ', figname)
     return
@@ -109,8 +109,8 @@ def plot_histogram(residuals,
         ax_plot.axvline(x=0, c='black', zorder=2, linestyle='dashed',
                         linewidth=0.5)
         # Plot the histogram of the model residuals
-        plot_hist = ax_plot.hist(residuals[keys_list[ikey]], color='red',
-                                 bins = 50, zorder=1)
+        ax_plot.hist(residuals[keys_list[ikey]], color='red',
+                     bins=50, zorder=1)
         # Making x-axis symmetric
         low, high = ax_plot.get_xlim()
         bound = max(abs(low), abs(high))
