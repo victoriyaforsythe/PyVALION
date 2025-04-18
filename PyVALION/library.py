@@ -192,50 +192,62 @@ def read_GIRO_line(line_arr):
     -------
     stamp : datetime.datetime
         Datetime stamp from the line.
-    score : flt
+    score : float
         Confidence score CS.
-    fof2 : flt
+    fof2 : float
         Critical frequency of F2 layer in MHz.
-    hmf2 : flt
+    hmf2 : float
         Height of the F2 layer in km.
-    B1 : flt
+    B1 : float
         Bottom-side thickness of F2 layer in km.
-    B0 : flt
+    B0 : float
         Bottom-side shape parameter unitless.
-
     """
+
     try:
         data_stamp = '%Y-%m-%dT%H:%M:%S.000Z'
         stamp = datetime.datetime.strptime(line_arr[0], data_stamp)
     except Exception:
         stamp = np.nan
-        logger.error('nan in data_stamp')
-    try:
-        score = float(line_arr[1])
-    except Exception:
-        score = np.nan
-        logger.error('line_arr[1] is not float')
-    try:
-        fof2 = float(line_arr[2])
-    except Exception:
-        fof2 = np.nan
-        logger.error('fof2 is nan')
-    try:
-        hmf2 = float(line_arr[6])
-    except Exception:
-        hmf2 = np.nan
-        logger.error('hmf2 is nan')
-    try:
-        B0 = float(line_arr[10])
-    except Exception:
-        B0 = np.nan
-        logger.error('B0 is nan')
-    try:
-        B1 = float(line_arr[12])
-    except Exception:
-        B1 = np.nan
-        logger.error('B1 is nan')
+        logger.error('Invalid datetime format in line_arr[0]')
+
+    score = safe_float(line_arr, 1, 'score')
+    fof2 = safe_float(line_arr, 2, 'fof2')
+    hmf2 = safe_float(line_arr, 6, 'hmf2')
+    B0 = safe_float(line_arr, 10, 'B0')
+    B1 = safe_float(line_arr, 12, 'B1')
+
     return stamp, score, fof2, hmf2, B0, B1
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def safe_float(line_arr, index, label):
+    """Reads 14-element line from GIRO ionosonde file.
+
+    Parameters
+    ----------
+    line_arr : str
+        String from the GIRO file.
+    index : ind
+        Index of the array to check.
+    label : str
+        Label of the array to print out.
+
+    Returns
+    -------
+    res : flt
+        If given element is can be converted to float return it,
+        if not, returns nan.
+    """
+
+    try:
+        res = float(line_arr[index])
+    except Exception:
+        logger.error(f'{label} is not a valid float')
+        res = np.nan
+    return res
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
