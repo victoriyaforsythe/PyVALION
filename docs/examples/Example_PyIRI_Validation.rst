@@ -171,7 +171,7 @@ validation day.
                                       save_res_dir,
                                       plot_name='Ionosondes_Map')
 
-.. image:: /docs/figures/Ionosonde_Map.png
+.. image:: /docs/figures/Ionosondes_Map.png
     :width: 600px
     :align: center
     :alt: GIRO Ionosondes Used for the Validation.
