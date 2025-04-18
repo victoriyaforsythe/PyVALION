@@ -44,7 +44,7 @@ def plot_ionosondes(y_instr_info,
     projection1 = ccrs.PlateCarree()
     fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(9, 3),
                            constrained_layout=True,
-                           subplot_kw={'projection':projection1})
+                           subplot_kw={'projection': projection1})
     plt.xlim([-180, 180])
     plt.ylim([-90, 90])
     ax_plot = ax
@@ -68,6 +68,7 @@ def plot_ionosondes(y_instr_info,
     plt.savefig(figname, bbox_inches='tight', facecolor='white')
     print('Figure Ionosonde Map is saved at: ', figname)
     return
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -102,8 +103,8 @@ def plot_histogram(residuals,
     for ikey in range(0, keys_list.size):
         ax_plot = ax[ikey]
         ax_plot.set_facecolor('lightgray')
-        ax_plot.set_xlabel(keys_list[ikey] +
-                           ' (' + model_units[keys_list[ikey]] + ')')
+        ax_plot.set_xlabel(keys_list[ikey]
+                           + ' (' + model_units[keys_list[ikey]] + ')')
         ax_plot.set_ylabel('Number of obs')
         ax_plot.axvline(x=0, c='black', zorder=2, linestyle='dashed',
                         linewidth=0.5)
