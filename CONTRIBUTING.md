@@ -45,7 +45,7 @@ Development
 
 To set up `PyVALION` for local development:
 
-1. [Fork PyVALION on GitHub](https://github.com/victoriyaforsythe/PyVALION/fork).
+1. Fork PyVALION on GitHub.
 
 2. Clone your fork locally:
 
