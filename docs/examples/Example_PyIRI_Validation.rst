@@ -168,7 +168,7 @@ validation day.
                                     save_res_dir,
                                     plot_name='Ionosondes_Map')
 
-.. image:: /docs/figures/Ionosonde_Map.pdf
+.. image:: /docs/figures/Ionosonde_Map.png
     :width: 600px
     :align: center
     :alt: GIRO Ionosondes Used for the Validation.
@@ -183,7 +183,7 @@ validation day.
                                     save_res_dir,
                                     plot_name='Residuals')
 
-.. image:: /docs/figures/Residuals.pdf
+.. image:: /docs/figures/Residuals.png
     :width: 600px
     :align: center
     :alt: Residuals between observations and model forecast.
@@ -200,12 +200,12 @@ each ionosonde
                                                     save_res_dir,
                                                     plot_name='IonRes')
 
-.. image:: /docs/figures/IonRes_NmF2.pdf
+.. image:: /docs/figures/IonRes_NmF2.png
     :width: 600px
     :align: center
     :alt: Mean NmF2 residuals for each ionosonde.
 
-.. image:: /docs/figures/IonRes_hmF2.pdf
+.. image:: /docs/figures/IonRes_hmF2.png
     :width: 600px
     :align: center
     :alt: Mean hmF2 residuals for each ionosonde.
