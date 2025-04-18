@@ -56,9 +56,9 @@ jobs:
 
     - name: Publish results to Coveralls
       env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
-      run: coveralls --rcfile=pyproject.toml
+      run: coveralls --rcfile=pyproject.toml --service=github
 
   finish:
     name: Finish Coverage Analysis
