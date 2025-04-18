@@ -44,8 +44,8 @@ results.
 ::
 
     atime = pd.to_datetime(np.arange(dtime,
-                                    dtime + datetime.timedelta(days=1),
-                                    datetime.timedelta(minutes=15)))
+                                     dtime + datetime.timedelta(days=1),
+                                     datetime.timedelta(minutes=15)))
 
     # Convert atime to an array of decimal hours
     aUT = atime.hour + atime.minute / 60. + atime.second / 3600.
