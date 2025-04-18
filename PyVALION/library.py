@@ -22,6 +22,7 @@ from PyVALION import logger
 import PyIRI
 from PyIRI.main_library import adjust_longitude as adjust_lon
 
+
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def download_GIRO_parameters(time_start,
@@ -203,6 +204,7 @@ def download_GIRO_parameters(time_start,
 
     return data_filtered
 
+
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def make_empty_dict_data():
@@ -220,6 +222,7 @@ def make_empty_dict_data():
             'B0': empty, 'B1': empty,
             'lon': empty, 'lat': empty, 'name': empty}
     return data
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -295,6 +298,7 @@ def filter_GIRO_parameters(time_start,
 
     return data_all
 
+
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def freq2den(freq):
@@ -318,6 +322,7 @@ def freq2den(freq):
     dens = 1.24e10 * (freq)**2
     return dens
 
+
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def nearest_element(array, value):
@@ -339,6 +344,7 @@ def nearest_element(array, value):
     absolute_val_array = np.abs(array - value)
     smallest_difference_index = absolute_val_array.argmin()
     return smallest_difference_index
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -489,6 +495,7 @@ def find_G_and_y(adtime,
     ion_info = {'name': un_names, 'lon': un_lon, 'lat': un_lat}
 
     return y, units, G, ion_info
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
