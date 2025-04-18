@@ -84,15 +84,15 @@ https://omniweb.gsfc.nasa.gov/form/dx1.html
 ::
 
     F2, _, _, _, _, _, den = PyIRI.main_library.IRI_density_1day(dtime.year,
-                                                                dtime.month,
-                                                                dtime.day,
-                                                                aUT,
-                                                                alon_reg,
-                                                                alat_reg,
-                                                                aalt,
-                                                                F107,
-                                                                PyIRI.coeff_dir,
-                                                                ccir_or_ursi=1)
+                                                                 dtime.month,
+                                                                 dtime.day,
+                                                                 aUT,
+                                                                 alon_reg,
+                                                                 alat_reg,
+                                                                 aalt,
+                                                                 F107,
+                                                                 PyIRI.coeff_dir,
+                                                                 ccir_or_ursi=1)
 
 8. Record the model outputs into a dictionary. When using your own model, match
 the format to this dictionary. Ensure that all arrays in the model dictionary
