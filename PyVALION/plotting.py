@@ -8,10 +8,10 @@
 
 import os
 
-import numpy as np
-import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.mpl.ticker as cticker
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 # -----------------------------------------------------------------------------
