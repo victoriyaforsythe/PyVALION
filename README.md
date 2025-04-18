@@ -147,13 +147,13 @@ PyVALION.plotting.plot_individual_mean_residuals(res_ion,
 
 <img width="2000" height="2000" src="https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Ionosondes_Map.pdf" alt="Map with GIRO ionosonde locations" title="Ionosondes_Map" style="float:left;">
 
-![Ionosondes_Map](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Ionosondes_Map.pdf)
+![Ionosondes_Map](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Ionosondes_Map.png)
 
-![Residuals](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Residuals.pdf)
+![Residuals](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/Residuals.png)
 
-![Residuals](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/IonRes_NmF2.pdf)
+![Residuals](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/IonRes_NmF2.png)
 
-![Residuals](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/IonRes_hmF2.pdf)
+![Residuals](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/figures/IonRes_hmF2.png)
 
 # Learn More
 See the tutorials folder for an example that validates NmF2 and hmF2 from PyIRI.
