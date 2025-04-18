@@ -3,7 +3,9 @@
 """Unit tests for PyVALION.library functions."""
 
 import numpy as np
+
 from PyVALION.library import nearest_element
+from PyVALION.library import freq2den
 
 def test_nearest_element_basic():
     arr = np.array([1, 3, 5, 7, 9])
@@ -37,3 +39,24 @@ def test_nearest_element_empty_array():
         assert False, "Expected ValueError for empty array"
     except ValueError:
         pass  # expected
+
+def test_freq2den_scalar():
+    freq = 1  # MHz
+    expected = 1.24e10  # m^-3
+    assert freq2den(freq) == expected
+
+def test_freq2den_array():
+    freq = np.array([1, 2, 3])
+    expected = 1.24e10 * freq**2
+    result = freq2den(freq)
+    np.testing.assert_allclose(result, expected)
+
+def test_freq2den_zero():
+    freq = 0
+    expected = 0.0
+    assert freq2den(freq) == expected
+
+def test_freq2den_negative_input():
+    freq = -2
+    expected = 1.24e10 * freq**2  # Should still return positive density
+    assert freq2den(freq) == expected
