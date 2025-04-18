@@ -176,14 +176,14 @@ def download_GIRO_parameters(time_start,
             output_flag[iname] = False
 
         # Delete the .txt file if clean_directory is True
-        if clean_directory == True:
+        if clean_directory:
             # Remove the .txt file
             os.remove(output_file_txt)
 
     # output_flag is an array of bool format, has True if data was present,
     # False if not.
     # The size is the same as the given array ion_name.
-    
+
     # Create new dictionary to store filtered data
     empty_flt = np.empty((0), dtype=float)
     empty_str = np.empty((0), dtype=str)
@@ -428,8 +428,8 @@ def find_G_and_y(adtime,
     # Cycle through the array of time frames in a selected day
     print('Forming observation vectors:')
     for it in range(0, adtime.size):
-        a = np.where((data['dtime'] >= adtime0[it]) &
-                    (data['dtime'] < adtime1[it]))[0]
+        a = np.where((data['dtime'] >= adtime0[it])
+                     & (data['dtime'] < adtime1[it]))[0]
 
         # Unique ionosondes for this time frame
         un_ion = np.unique(data['name'][a])
@@ -437,7 +437,7 @@ def find_G_and_y(adtime,
         # Cycle through unique ions in the selected time period
         for iion in range(0, un_ion.size):
             b = np.where(data['name'][a] == un_ion[iion])[0]
-            
+
             # If there is data populate arrays with mean ionosonde obs
             if data['dtime'][a[b]].size > 0:
                 mean_fof2 = np.nanmean(data['fof2'][a[b]])
@@ -520,12 +520,12 @@ def find_model_data(field, G):
     """
 
     # check that G is compatible with field
-    if ((field.shape[0] != G.shape[1]) |
-        (field.shape[1] != G.shape[2]) |
-        (field.shape[2] != G.shape[3])):
+    if ((field.shape[0] != G.shape[1])
+        | (field.shape[1] != G.shape[2])
+        | (field.shape[2] != G.shape[3])):
         flag = 'Error: G and filed are not compatable.'
         logger.error(flag)
-    
+
     # Before G and filed can be multiplied, we need to reshape them into
     # [N_obs, N_filed] and [N_field] where N_field is a size of a flattened
     # array that combines time and horizontal grid dimmentions
