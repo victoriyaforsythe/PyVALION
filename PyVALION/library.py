@@ -509,6 +509,13 @@ def find_model_data(field, G):
         Array of model data, the expected data according to the model.
     """
 
+    # check that G is compatible with field
+    if ((field.shape[0] != G.shape[1]) |
+        (field.shape[1] != G.shape[2]) |
+        (field.shape[2] != G.shape[3])):
+        flag = 'Error: G and filed are not compatable.'
+        logger.error(flag)
+    
     # Before G and filed can be multiplied, we need to reshape them into
     # [N_obs, N_filed] and [N_field] where N_field is a size of a flattened
     # array that combines time and horizontal grid dimmentions
