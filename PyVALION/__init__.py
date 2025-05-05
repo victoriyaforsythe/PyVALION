@@ -4,13 +4,13 @@ from importlib import metadata
 from importlib import resources
 import logging
 
-# Import the package modules and top-level classes
-from PyVALION import library  # noqa F401
-from PyVALION import plotting  # noqa F401
-
 # Define a logger object to allow easier log handling
 logging.raiseExceptions = False
 logger = logging.getLogger('pyvalion_logger')
+
+# Import the package modules and top-level classes
+from PyVALION import library  # noqa F401
+from PyVALION import plotting  # noqa F401
 
 # Set version
 __version__ = metadata.version('PyVALION')
