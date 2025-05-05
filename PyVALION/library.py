@@ -50,9 +50,11 @@ def download_GIRO_parameters(time_start,
         String to add to the name of the files for saved results
     clean_directory : bool
         If set to True the downloaded .txt ionosonde file will be deleted
-    filter_CS : flt
-        Minimum accepted Autoscaling Confidence Score (from 0 to 100, 999 if
-        manual scaling, -1 if unknown)
+        (default=True)
+    filter_CS : float
+        Minimum accepted Autoscaling Confidence Score. Expects values from 0 to
+        100, with flag values of 999 for manual scaling and -1 if unknown.
+        (default=90)
 
     Returns
     -------
@@ -60,9 +62,9 @@ def download_GIRO_parameters(time_start,
         Dictionary with all the data combined.
 
     """
-    PyVALION.logger.info('Downloading data from GIRO for: '
-                         + time_start.strftime('%Y%m%dT%H%MZ')
-                         + '-' + time_finish.strftime('%Y%m%dT%H%MZ'))
+    PyVALION.logger.info(''.join(['Downloading data from GIRO for: ',
+                                  time_start.strftime('%Y%m%dT%H%MZ'), '-',
+                                  time_finish.strftime('%Y%m%dT%H%MZ')]))
 
     output_flag = np.empty((ion_name.size), dtype=bool)
 
@@ -70,7 +72,8 @@ def download_GIRO_parameters(time_start,
     # This is important because the user might want to reduce the number
     # of the ionosondes for the validation
     file_ion_name = os.path.join(PyVALION.giro_names_dir, 'GIRO_Ionosondes.p')
-    giro_name = pickle.load(open(file_ion_name, 'rb'))
+    with open(file_ion_name, 'rb') as fopen:
+        giro_name = pickle.load(fopen)
 
     # Download parameter for each ionosonde for the duration of the val period
     for iname in range(0, ion_name.size):
@@ -91,10 +94,11 @@ def download_GIRO_parameters(time_start,
                                        file_name_str + '.p')
 
         # String for wget in GIRO-desired format
-        url = ("https://lgdc.uml.edu/common/DIDBGetValues?ursiCode="
-               + ionosonde + "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate="
-               + time_start.strftime('%Y/%m/%d+%H:%M:%S')
-               + "&toDate=" + time_finish.strftime('%Y/%m/%d+%H:%M:%S'))
+        url = ''.join((
+            "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=", ionosonde,
+            "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=",
+            time_start.strftime('%Y/%m/%d+%H:%M:%S'), "&toDate=",
+            time_finish.strftime('%Y/%m/%d+%H:%M:%S')))
 
         # Run wget
         subprocess.run(["wget", "-O", output_file_txt, url, '-q'])
@@ -114,6 +118,7 @@ def download_GIRO_parameters(time_start,
         with open(output_file_txt, 'r') as file:
             lines = file.readlines()
         str_arr = np.array(lines[25:-1])
+
         for line in str_arr:
             line_arr = line.split()
             if len(line_arr) == 14:
@@ -139,7 +144,8 @@ def download_GIRO_parameters(time_start,
         # If there are elements in adtime array pickle the output
         if adtime.size > 0:
             # Pickle file for each ionosonde
-            pickle.dump(data, open(output_file_pic, "wb"))
+            with open(output_file_pic, 'wb') as fclose:
+                pickle.dump(data, fclose)
             output_flag[iname] = True
         else:
             output_flag[iname] = False
@@ -172,7 +178,8 @@ def download_GIRO_parameters(time_start,
     # Pickle file
     output_file_str = ('Filtered_independent_ionosondes_' + name_run + '.p')
     write_file = os.path.join(save_dir, output_file_str)
-    pickle.dump(data_filtered, open(write_file, "wb"))
+    with open(write_file, 'wb') as fwrite:
+        pickle.dump(data_filtered, fwrite)
 
     return data_filtered
 
@@ -206,9 +213,10 @@ def read_GIRO_line(line_arr):
     try:
         data_stamp = '%Y-%m-%dT%H:%M:%S.000Z'
         stamp = datetime.datetime.strptime(line_arr[0], data_stamp)
-    except Exception:
+    except Exception as err:
         stamp = np.nan
-        logger.error('Invalid datetime format in line_arr[0]')
+        logger.error(''.join(['Invalid datetime format in line_arr[0], ',
+                              'failed with Exception: ', str(err)]))
 
     score = safe_float(line_arr, 1, 'score')
     fof2 = safe_float(line_arr, 2, 'fof2')
@@ -242,7 +250,7 @@ def safe_float(line_arr, index, label):
 
     try:
         res = float(line_arr[index])
-    except Exception:
+    except (ValueError, TypeError):
         logger.error(f'{label} is not a valid float')
         res = np.nan
     return res
@@ -286,9 +294,11 @@ def filter_GIRO_parameters(time_start,
         String arrays of GIRO ionosondes names
     save_dir : str
         Directory where the downloaded files are
-    filter_CS : flt
-        Minimum accepted Autoscaling Confidence Score (from 0 to 100, 999 if
-        manual scaling, -1 if unknown)
+    filter_CS : float
+        Minimum accepted Autoscaling Confidence Score. Expects values from 0 to
+        100, with flag values of 999 for manual scaling and -1 if unknown.
+        (default=90)
+
     Returns
     -------
     data_all : dict
@@ -308,8 +318,9 @@ def filter_GIRO_parameters(time_start,
                          + '_'
                          + time_finish.strftime('%Y%m%dT%H%MZ') + '.p')
 
-        imput_file_pic = os.path.join(save_dir, file_name_str)
-        data = pickle.load(open(imput_file_pic, 'rb'))
+        input_file_pic = os.path.join(save_dir, file_name_str)
+        with open(input_file_pic, 'rb') as fin:
+            data = pickle.load(fin)
 
         # Filter out nans in hmf2
         data_new = make_empty_dict_data()
@@ -530,7 +541,8 @@ def find_G_and_y(adtime,
 
     # Open GIRO information file to pull lon and lat for these stations
     file_ion_name = os.path.join(PyVALION.giro_names_dir, 'GIRO_Ionosondes.p')
-    giro_name = pickle.load(open(file_ion_name, 'rb'))
+    with open(file_ion_name, 'rb') as fopen:
+        giro_name = pickle.load(fopen)
     # Find elements from GIRO array of names as in un_names array
     a = np.where(np.isin(giro_name['name'], un_names))[0]
     un_lon = giro_name['lon'][a]
@@ -558,9 +570,10 @@ def find_model_data(field, G):
     -------
     model_data : array-like
         Array of model data, the expected data according to the model.
+
     """
 
-    # check that G is compatible with field
+    # Check that G is compatible with field
     if (field.shape[0: 2] == G.shape[1:3]):
         # Before G and filed can be multiplied, we need to reshape them into
         # [N_obs, N_filed] and [N_field] where N_field is a size of a flattened
@@ -578,6 +591,7 @@ def find_model_data(field, G):
     else:
         flag = 'Error: G and filed are not compatable.'
         logger.error(flag)
+
     return model_data
 
 
@@ -639,9 +653,11 @@ def find_residuals(model, G, obs_data, obs_info, units):
     # The dictionary model_data will be used to store model predictions at
     # observation points
     model_data = {}
+
     # The dictionary residuals will store the differences between the observed
     # data and the model predictions
     residuals = {}
+
     # The dictionary model_units will store the units (as strings) for each key
     # in the model_data dictionary
     model_units = {}
@@ -660,6 +676,7 @@ def find_residuals(model, G, obs_data, obs_info, units):
     for key in residuals:
         # Make an array with the size of the number of ionosondes
         res_ion[key] = np.zeros((obs_info['name'].size))
+
         # Loop through all ionosondes
         for i in range(0, obs_info['name'].size):
             # Find mean residuals for each ionosonde

@@ -13,6 +13,8 @@ import cartopy.mpl.ticker as cticker
 import matplotlib.pyplot as plt
 import numpy as np
 
+from PyVALION import logger
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -39,6 +41,7 @@ def plot_ionosondes(y_instr_info,
     plot_name : str
         Output name, without directory, for the saved figure
         (default='Ionosondes_Map.pdf')
+
     """
 
     # Plot map with ionosondes before filtering
@@ -65,9 +68,9 @@ def plot_ionosondes(y_instr_info,
                       + dtime.strftime('%Y%m%d'))
 
     # Save figure
-    figname = os.path.join(plot_dir, plot_name + '.pdf')
+    figname = os.path.join(plot_dir, plot_name)
     plt.savefig(figname, bbox_inches='tight', facecolor='white')
-    print('Figure Ionosonde Map is saved at: ', figname)
+    logger.info('Figure Ionosonde Map is saved at: ', figname)
     return
 
 
@@ -119,9 +122,9 @@ def plot_histogram(residuals,
     plt.tight_layout()
 
     # Save figure
-    figname = os.path.join(plot_dir, plot_name + '.pdf')
+    figname = os.path.join(plot_dir, plot_name)
     plt.savefig(figname, bbox_inches='tight', facecolor='white')
-    print('Figure Residuals is saved at: ', figname)
+    logger.info('Figure Residuals is saved at: ', figname)
     return
 
 
@@ -157,10 +160,15 @@ def plot_individual_mean_residuals(res_ion,
         Output name, without directory, for the saved figure
         (default='Ion_Residuals.pdf')
 
+    Notes
+    -----
+    Each residuals parameter will be saved in a different plot, with that
+    parameter appended to the start of the default plot name (e.g.,
+    'ay_nmf2_Ion_Residuals.pdf')
+
     """
     # Loop through all parameters in the residuals dictionary
     for key in res_ion:
-
         fig, ax = plt.subplots(1, 1, sharex=False, sharey=False)
         fig.suptitle(key + ' Residuals, ' + dtime.strftime('%Y%m%d'))
         fig.set_size_inches(7, 3)
@@ -180,7 +188,7 @@ def plot_individual_mean_residuals(res_ion,
         ax_plot.set_ylim((-bound, bound))
 
         # Save figure
-        figname = os.path.join(plot_dir, plot_name + '_' + key + '.pdf')
+        figname = os.path.join(plot_dir, "_".join([key + plot_name]))
         plt.savefig(figname, bbox_inches='tight', facecolor='white')
-        print('Figure Ionosonde Mean Residuals is saved at: ', figname)
+        logger.info('Figure Ionosonde Mean Residuals is saved at: ', figname)
     return
