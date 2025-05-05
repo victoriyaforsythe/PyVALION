@@ -1,8 +1,8 @@
 """Core library imports for PyVALION."""
 
-import logging
 from importlib import metadata
 from importlib import resources
+import logging
 
 # Import the package modules and top-level classes
 from PyVALION import library  # noqa F401
