@@ -5,7 +5,7 @@
 [![PyVALION Package latest release](https://img.shields.io/pypi/v/PyVALION.svg)](https://pypi.org/project/PyVALION/)
 [![Build Status](https://github.com/victoriyaforsythe/PyVALION/actions/workflows/main.yml/badge.svg)](https://github.com/victoriyaforsythe/PyVALION/actions/workflows/main.yml)
 [![Documentation Status](https://readthedocs.org/projects/pyvalion/badge/?version=latest)](https://pyvalion.readthedocs.io/en/latest/?badge=latest)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8235173.svg)](https://doi.org/10.5281/zenodo.8235173)
+[![DOI](https://zenodo.org/badge/968667202.svg)](https://doi.org/10.5281/zenodo.15413125)
 
 PyVALION is a Python-based software package for validating ionospheric electron density model outputs.
 
