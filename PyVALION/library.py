@@ -1182,7 +1182,7 @@ def make_empty_dict_data_jason():
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def read_jason2_file(j2url):
-    """Read in relevant data from Jason-2 OPeNDAP URL
+    """Read in relevant data from Jason-2 OPeNDAP URL.
 
     See OSTM/Jason-2 Products Handbook Section 4.2.5 for details.
 
