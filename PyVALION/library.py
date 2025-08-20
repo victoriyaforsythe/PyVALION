@@ -699,21 +699,20 @@ def download_Jason_TEC(time_start,
                        save_data_option=False,
                        sat_names=np.array(["JA2", "JA3"]),
                        jason_manifest_filename="jason_manifest.txt"):
-    """
-    Retrieve Jason ionospheric TEC from from www.ncei.noaa.gov THREDDS
+    """Retrieve Jason ionospheric TEC from from www.ncei.noaa.gov THREDDS.
 
     Parameters
     ----------
     time_start : datetime.datetime
-        Start date and time for the validation period
+        Start date and time for the validation period.
     time_finish : datetime.datetime
-        End date and time for the validation period
+        End date and time for the validation period.
     save_dir : str
         Directory where to save the downloaded data and where Jason file
         manifest is stored.
     name_run : str
-        String to add to the name of the files for saved results.
-        Defaults to empty string.
+        String to add to the name of the files for saved results. Defaults to
+        empty string.
     save_data_option : bool
         Option to save data as a pickle (.p) file into save_dir. Defaults to
         False.
@@ -726,7 +725,6 @@ def download_Jason_TEC(time_start,
     -------
     data_all : dict
         Dictionary with all the data combined.
-
     """
 
     # Create or update Jason file manifest
@@ -780,7 +778,16 @@ def download_Jason_TEC(time_start,
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def create_or_update_manifest(output_file):
+    """Create a new manifest or update an existing one.
 
+    Checks if the manifest file exists. If not, creates a new manifest;
+    otherwise, updates it with new files from recent cycles.
+
+    Parameters
+    ----------
+    output_file : str
+        Path to the manifest file to create or update.
+    """
     if not os.path.exists(output_file):
         create_manifest(output_file)
     else:
@@ -790,6 +797,16 @@ def create_or_update_manifest(output_file):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def create_manifest(output_file):
+    """Create a new manifest of all Jason-2 and Jason-3 .nc files.
+
+    Scans all THREDDS catalog URLs, collects netCDF file URLs, deduplicates
+    by filename, and saves the sorted list to the specified manifest file.
+
+    Parameters
+    ----------
+    output_file : str
+        Path to the manifest file to create.
+    """
     # Print message to user
     print(f"Creating Jason data file manifest as '{output_file}'.")
 
@@ -836,11 +853,16 @@ def create_manifest(output_file):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def update_manifest(output_file):
-    """
-    Update an existing manifest by scanning for .nc files in newer cycles.
-    Only scans 'cycleXXX' folders with equal or higher cycle number than the
-    last entry. Appends only files with timestamps newer than the most recent
-    entry.
+    """Update a manifest file by appending new .nc files from newer cycles.
+
+    Scans 'cycleXXX' folders with cycle numbers equal to or higher than the
+    last entry and appends only files with timestamps newer than the most
+    recent entry in the manifest.
+
+    Parameters
+    ----------
+    output_file : str
+        Path to the manifest file to update.
     """
     # Print message to user
     print(f"File '{output_file}' already exists. Checking for updates.")
@@ -940,8 +962,7 @@ def update_manifest(output_file):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def count_cycle_subcatalogs(url):
-    """
-    Count the number of cycle sub-catalogs in a THREDDS catalog.
+    """Count the number of cycle sub-catalogs in a THREDDS catalog.
 
     Parameters
     ----------
@@ -952,8 +973,7 @@ def count_cycle_subcatalogs(url):
     Returns
     -------
     cycle_num : int
-        Total number of cycle sub-catalogs in base url
-
+        Total number of cycle sub-catalogs in base url.
     """
 
     try:
@@ -967,8 +987,29 @@ def count_cycle_subcatalogs(url):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def list_nc_files(url, root_base=None, progress=None):
-    """
-    Recursively list all .nc file HTTPServer URLs under a THREDDS catalog.
+    """Recursively list netCDF files in a THREDDS catalog.
+
+    This function traverses a THREDDS catalog at the given URL and returns
+    all `.nc` file URLs served via the HTTPServer interface. If a `root_base`
+    is provided, it is used as the base URL for constructing full paths. An
+    optional `progress` object can be updated for each subcatalog processed.
+
+    Parameters
+    ----------
+    url : str
+        URL of the THREDDS catalog (ending with `catalog.xml`).
+    root_base : str, optional
+        Base URL to use when constructing full dataset URLs. If None, the
+        base is inferred from `url`.
+    progress : object, optional
+        Progress indicator with an `update(n)` method (e.g., a tqdm instance)
+        to track progress while iterating through subcatalogs.
+
+    Returns
+    -------
+    nc_urls : list of str
+        List of `.nc` file URLs accessible via HTTPServer (converted to DODS/C
+        URLs for subsequent downloads).
     """
     nc_urls = []
 
@@ -1000,7 +1041,8 @@ def list_nc_files(url, root_base=None, progress=None):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def extract_first_date(url):
-    """
+    """Extract first date from URL.
+
     Extract the first occurrence of a datetime stamp in the format
     YYYYMMDD_HHMMSS from the filename.
     Returns a datetime object if found, otherwise a fallback datetime far in
@@ -1009,13 +1051,12 @@ def extract_first_date(url):
     Parameters
     ----------
     url : str
-        URL containing Jason filename from www.ncei.noaa.gov THREDDS catalog
+        URL containing Jason filename from www.ncei.noaa.gov THREDDS catalog.
 
     Returns
     -------
     first_date : datetime.datetime
-        Start date of the Jason file
-
+        Start date of the Jason file.
     """
 
     fname = os.path.basename(url)
@@ -1031,21 +1072,21 @@ def extract_first_date(url):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def extract_cycle_number(url):
-    """
-    Extracts the cycle number from a URL string (e.g., 'cycle345' → 345). Used
+    """Extract the cycle number from a URL string.
+
+    Extract the cycle number from a URL string (e.g., 'cycle345' → 345). Used
     to update Jason file manifest from last recorded cycle.
     Returns -1 if not found.
 
     Parameters
     ----------
     url : str
-        URL containing Jason filename from www.ncei.noaa.gov THREDDS catalog
+        URL containing Jason filename from www.ncei.noaa.gov THREDDS catalog.
 
     Returns
     -------
     cycle_num : int
-        Cycle number from Jason filename URL
-
+        Cycle number from Jason filename URL.
     """
     match = re.search(r'cycle(\d{3})', url)
     return int(match.group(1)) if match else -1
@@ -1057,20 +1098,21 @@ def filter_urls_by_timerange(manifest_filepath,
                              user_start,
                              user_finish,
                              sat_names):
-    """
+    """Filter list of URLs by user timespan.
+
     Reads a .txt file of URLs and returns only those where the file's time
     range overlaps with the user-specified datetime window.
 
     Parameters
     ----------
-        manifest_filepath : str
-            Path to Jason file manifest (.txt file containing URLs)
-        user_start : datetime.datetime
-            Start date and time for the validation period
-        user_finish : datetime.datetime
-            End date and time for the validation period
-        sat_names : np.ndarray
-            Array of satellite name substrings to include (e.g., "JA2", "JA3")
+    manifest_filepath : str
+        Path to Jason file manifest (.txt file containing URLs).
+    user_start : datetime.datetime
+        Start date and time for the validation period.
+    user_finish : datetime.datetime
+        End date and time for the validation period.
+    sat_names : np.ndarray
+        Array of satellite name substrings to include (e.g., "JA2", "JA3").
 
     Returns
     -------
@@ -1141,18 +1183,18 @@ def make_empty_dict_data_jason():
 # -----------------------------------------------------------------------------
 def read_jason2_file(j2url):
     """Read in relevant data from Jason-2 OPeNDAP URL
+
     See OSTM/Jason-2 Products Handbook Section 4.2.5 for details.
 
     Parameters
     ----------
     j2url : str
-        Jason-2 OPeNDAP url
+        Jason-2 OPeNDAP url.
 
     Returns
     -------
     data_all : dict
         Dictionary with all the data from a single file combined.
-
     """
 
     # Open Jason-2 netCDF with OPeNDAP URL
@@ -1240,18 +1282,18 @@ def read_jason2_file(j2url):
 # -----------------------------------------------------------------------------
 def read_jason3_file(j3url):
     """Read in relevant data from Jason-3 OPeNDAP URL.
+
     See OSTM/Jason-3 Products Handbook for details.
 
     Parameters
     ----------
     j3url : str
-        Jason-3 OPeNDAP url
+        Jason-3 OPeNDAP url.
 
     Returns
     -------
     data_all : dict
         Dictionary with all the data from a single file combined.
-
     """
 
     #  Open Jason-3 netCDF with OPeNDAP URL
@@ -1349,6 +1391,29 @@ def robust_iterative_filter(
     LANCZOS_NB_PTS_MIN=10,
     CONVERGENCE_THRESHOLD=0
 ):
+    """Robust iterative filtering to remove outliers from a 1D signal.
+
+    This function performs a multi-step iterative filtering procedure to
+    remove outliers from the input data. Steps include:
+    1. Initial global sigma-based outlier detection.
+    2. Optional linear interpolation of small gaps.
+    3. Median filtering.
+    4. Lanczos filtering.
+    5. Residual-based outlier flagging.
+    The iteration continues until convergence criteria are met.
+
+    Parameters
+    ----------
+    data_raw : np.ndarray
+        1D array of raw input data.
+
+    Returns
+    -------
+    data_lanczos : np.ndarray
+        Filtered 1D array after robust iterative filtering.
+    outlier_mask : np.ndarray of bool
+        Boolean mask indicating which points were flagged as outliers.
+    """
     data = data_raw.copy()
     outlier_mask = np.zeros(len(data), dtype=bool)
 
@@ -1402,7 +1467,22 @@ def robust_iterative_filter(
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def fill_small_gaps(data, max_gap_size):
-    """Linearly interpolate gaps smaller than max_gap_size."""
+    """Linearly interpolate gaps smaller than max_gap_size.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        1D array of data with NaN values representing gaps.
+    max_gap_size : int
+        Maximum consecutive NaN values to interpolate. Gaps longer than this
+        will remain as NaN.
+
+    Returns
+    -------
+    interp_all : np.ndarray
+        1D array with small gaps linearly interpolated, preserving larger gaps
+        as NaN.
+    """
     # data_filled = data.copy()
     isnan = np.isnan(data)
     idx = np.arange(len(data))
@@ -1428,8 +1508,30 @@ def fill_small_gaps(data, max_gap_size):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def apply_median_filter(data, half_width, min_valid, mean_width=0):
-    """Median filter with optional averaging.
-       Preserves NaNs in the original data.
+    """Apply a median filter with optional averaging to a 1D array.
+
+    This function applies a median filter to the input data, preserving NaN
+    values. An optional local averaging around the median can be applied by
+    specifying `mean_width`. Filtering is only applied if at least `min_valid`
+    non-NaN points exist in the window.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        1D array of data to be filtered.
+    half_width : int
+        Half-width of the window for the median filter.
+    min_valid : int
+        Minimum number of valid (non-NaN) points required to compute the
+        median in each window.
+    mean_width : int, optional
+        Half-width of averaging around the median. Default is 0 (no averaging).
+
+    Returns
+    -------
+    result : np.ndarray
+        1D array of filtered data with the same shape as `data`. NaNs in the
+        original array remain at the same positions.
     """
     result = np.full_like(data, np.nan)
     N = len(data)
@@ -1458,7 +1560,31 @@ def apply_median_filter(data, half_width, min_valid, mean_width=0):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def lanczos_filter(signal, N, cutoff, min_valid=3):
-    """Apply Lanczos filter with given parameters, ignoring NaNs."""
+    """Apply a Lanczos filter to a 1D signal, ignoring NaNs.
+
+    This function convolves the input signal with a symmetric Lanczos kernel
+    of half-width N and the specified cutoff frequency. Elements with NaN
+    values are ignored, and filtering is applied only if at least `min_valid`
+    non-NaN points are available in the kernel window.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        1D array of data to be filtered.
+    N : int
+        Half-width of the Lanczos kernel.
+    cutoff : float
+        Cutoff frequency for the filter.
+    min_valid : int, optional
+        Minimum number of valid (non-NaN) points required to apply the filter
+        at each position. Default is 3.
+
+    Returns
+    -------
+    filtered : np.ndarray
+        1D array of the filtered signal, with the same shape as `signal`.
+        Positions with insufficient valid points remain NaN.
+    """
     kernel = compute_lanczos_kernel(N, cutoff)
     filtered = np.full_like(signal, np.nan)
 
@@ -1479,7 +1605,23 @@ def lanczos_filter(signal, N, cutoff, min_valid=3):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def compute_lanczos_kernel(N, cutoff):
-    """Build a symmetric Lanczos kernel with half-width N and cutoff."""
+    """Build a symmetric Lanczos kernel with half-width N and cutoff.
+
+    This function creates a normalized symmetric Lanczos kernel using a
+    sinc filter multiplied by a Lanczos window.
+
+    Parameters
+    ----------
+    N : int
+        Half-width of the kernel.
+    cutoff : float
+        Cutoff frequency.
+
+    Returns
+    -------
+    kernel : np.ndarray
+        Normalized symmetric Lanczos kernel.
+    """
     x = np.arange(-N, N + 1)
     sinc_filter = np.sinc(x / cutoff)
     lanczos_window = np.sinc(x / N)
@@ -1490,19 +1632,19 @@ def compute_lanczos_kernel(N, cutoff):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def compute_jason_tec(iono_ku_delay):
-    """Jason TEC computation.
+    """Compute Jason TEC.
+
     See OSTM/Jason-2 Products Handbook Section 4.2.5 for details.
 
     Parameters
     ----------
     iono_ku_delay : float
-        Jason-2 or Jason-3 ku-band ionospheric delay
+        Jason-2 or Jason-3 Ku-band ionospheric delay.
 
     Returns
     -------
     tec : float
-        Total electron content in TECU
-
+        Total electron content in TECU.
     """
 
     scale_topex = 13.575E9 * 13.575E9 / 40.3  # f^2/40.3
@@ -1515,18 +1657,20 @@ def compute_jason_tec(iono_ku_delay):
 def concat_data_dicts(A, B):
     """Concatenate two dictionaries with the same field names.
 
+    This function merges the contents of dictionaries A and B, assuming both
+    have identical field names. The data from A appears before B.
+
     Parameters
     ----------
     A : dict
-        Dictionary with identical field names to B
+        Dictionary with identical field names to B.
     B : dict
-        Dictionary with identical field names to A
+        Dictionary with identical field names to A.
 
     Returns
     -------
     C : dict
-        Dictionary with all the data from A and B combined (A preceeding B)
-
+        Dictionary with all the data from A and B combined (A preceding B).
     """
     C = {}
 
@@ -1549,20 +1693,22 @@ def concat_data_dicts(A, B):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def mask_dict(data_raw, mask):
-    """
-    Masks data within all data dictionary fields
+    """Mask data within all data dictionary fields.
+
+    This function removes elements from each field in the data dictionary
+    according to the mask provided: 1 for keep, 0 for discard.
 
     Parameters:
     -----------
     data_raw : dict of arrays (np.ndarray or pd.Series)
         Dictionary of data fields to downsample.
     mask : 0s and 1s
-        1 for keep, 0 for discard
+        1 for keep, 0 for discard.
 
     Returns:
     --------
     dict_resamp : dict
-        Dictionary with cleaned out fields
+        Dictionary with cleaned out fields.
     """
 
     data_clean = {}
