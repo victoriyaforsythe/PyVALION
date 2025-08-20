@@ -9,9 +9,13 @@
 """
 
 import datetime
+import netCDF4
 import os
 import pickle
+import re
+from siphon.catalog import TDSCatalog
 import subprocess
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -684,3 +688,884 @@ def find_residuals(model, G, obs_data, obs_info, units):
             res_ion[key][i] = np.nanmean(residuals[key][a])
 
     return model_data, residuals, model_units, res_ion
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def download_Jason_TEC(time_start,
+                       time_finish,
+                       save_dir,
+                       name_run='',
+                       save_data_option=False,
+                       sat_names=np.array(["JA2", "JA3"]),
+                       jason_manifest_filename="jason_manifest.txt"):
+    """
+    Retrieve Jason ionospheric TEC from from www.ncei.noaa.gov THREDDS
+
+    Parameters
+    ----------
+    time_start : datetime.datetime
+        Start date and time for the validation period
+    time_finish : datetime.datetime
+        End date and time for the validation period
+    save_dir : str
+        Directory where to save the downloaded data and where Jason file
+        manifest is stored.
+    name_run : str
+        String to add to the name of the files for saved results.
+        Defaults to empty string.
+    save_data_option : bool
+        Option to save data as a pickle (.p) file into save_dir. Defaults to
+        False.
+    sat_names : array-like
+        String arrays of Jason satellite names ("JA2" and/or "JA3").
+    jason_manifest_filename : str
+        String to designate an alternative Jaosn file manifest filename.
+
+    Returns
+    -------
+    data_all : dict
+        Dictionary with all the data combined.
+
+    """
+
+    # Create or update Jason file manifest
+    jason_manifest_path = os.path.join(save_dir, jason_manifest_filename)
+    create_or_update_manifest(jason_manifest_path)
+
+    # Cross-reference user-inputted dates with file manifest
+    matching_urls = filter_urls_by_timerange(jason_manifest_path, time_start,
+                                             time_finish, sat_names)
+
+    # Initialize data dictionary
+    data_all = make_empty_dict_data_jason()
+
+    # Loop and read through all matching urls
+    # for row in matching_urls:
+    print(f"\nProcessing Jason TEC data from {len(matching_urls)} files.")
+    for row in tqdm(matching_urls, desc="Jason file progress",
+                    unit="file"):
+        url = row[0]
+
+        # Perform different file reading routine for Jason-2 and Jason-2 files
+        if "JA3" in url and any(sat_names == "JA3"):
+            # data_file = read_jason3_file(url)
+            data_file = read_jason3_file(url)
+        elif "JA2" in url and any(sat_names == "JA2"):
+            data_file = read_jason2_file(url)
+
+        # Concatenate all fields in the dictionary
+        # data_all = {k: np.concatenate([data_all[k], data_file[k]])
+        #             for k in data_all}
+        data_all = concat_data_dicts(data_all, data_file)
+
+    # Convert dtime type
+    data_all['dtime'] = pd.to_datetime(data_all['dtime'])
+    # Indices for data within timespan
+    t_match = ((data_all['dtime'] >= time_start)
+               & (data_all['dtime'] <= time_finish))
+    # Clear out data not within time spec
+    data_all = mask_dict(data_all, t_match)
+
+    if save_data_option:
+        # Jason raw data filename
+        file_str_raw = ('Jason_TEC_raw_' + name_run + '.p')
+        file_path_raw = os.path.join(save_dir, file_str_raw)
+        print(f"Saving Raw Jason TEC data to: '{file_path_raw}'")
+        pickle.dump(data_all, open(file_path_raw, "wb"))
+
+    return data_all
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def create_or_update_manifest(output_file):
+
+    if not os.path.exists(output_file):
+        create_manifest(output_file)
+    else:
+        update_manifest(output_file)
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def create_manifest(output_file):
+    # Print message to user
+    print(f"Creating Jason data file manifest as '{output_file}'.")
+
+    # Jason-2 and Jason-3 catalog URLs (THREDDS):
+    catalog_urls = [
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason2/gdr/gdr/"
+        "catalog.xml",
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/"
+        "catalog.xml",
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/gdr/"
+        "catalog.xml"
+    ]
+
+    print("Counting total cycle catalogs across all Jason-2 and Jason-3 "
+          "sources...")
+    total_cycles = sum(count_cycle_subcatalogs(url) for url in
+                       catalog_urls)
+    print(f"Total of {total_cycles} cycle catalogs will be scanned.")
+
+    all_nc_urls = []
+
+    # Use progress bar for combined processing
+    with tqdm(total=total_cycles, desc="Processing cycles") as progress:
+        for url in catalog_urls:
+            all_nc_urls.extend(list_nc_files(url, progress=progress))
+
+    # Deduplicate by filename
+    seen = {}
+    for url in all_nc_urls:
+        fname = os.path.basename(url)
+        if (fname not in seen) and "JA2_GPN_2Pf" not in fname:
+            seen[fname] = url  # Save only first occurrence
+
+    # Sort by cycle number
+    sorted_urls = sorted(seen.values(), key=extract_first_date)
+
+    with open(output_file, "w") as f:
+        for url in sorted_urls:
+            f.write(url + "\n")
+
+    print(f"{len(sorted_urls)} unique .nc URLs saved to '{output_file}'")
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def update_manifest(output_file):
+    """
+    Update an existing manifest by scanning for .nc files in newer cycles.
+    Only scans 'cycleXXX' folders with equal or higher cycle number than the
+    last entry. Appends only files with timestamps newer than the most recent
+    entry.
+    """
+    # Print message to user
+    print(f"File '{output_file}' already exists. Checking for updates.")
+
+    # Load existing URLs
+    with open(output_file, "r") as f:
+        existing_urls = [line.strip() for line in f if line.strip()]
+
+    if not existing_urls:
+        print("Jason file manifest is empty. Creating new manifest")
+        create_manifest(output_file)
+        return
+
+    # Get cycle number and timestamp from last URL in manifest
+    last_url = existing_urls[-1]
+    last_cycle = extract_cycle_number(last_url)
+    last_timestamp = extract_first_date(last_url)
+
+    # Check that the final file is not a Jason-2 entry
+    if "JA2" in last_url:
+        print("WARNING: Last listed file is a Jason-2 entry. Rebuilding "
+              "manifest...")
+        create_manifest(output_file)
+        return
+
+    # Hardcoded threshold datetime fir Jason-2 file end
+    # (do not update Jason-2 manifest listings)
+    threshold_str = "20191001_065045"
+    threshold_dt = datetime.datetime.strptime(threshold_str, "%Y%m%d_%H%M%S")
+    if last_timestamp < threshold_dt:
+        print(f"WARNING: Last listed file timestamp {last_timestamp} is older "
+              f"than end of Jason-2 record. Rebuilding manifest...")
+        create_manifest(output_file)
+        return
+
+    print(f"Last recorded data: cycle: {last_cycle}, "
+          f"timestamp: {last_timestamp}")
+
+    # Jason-3 THREDDS catalog URLs
+    catalog_urls = [
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/"
+        "catalog.xml",
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/gdr/"
+        "catalog.xml"
+    ]
+
+    all_new_urls = []
+    all_cycles = []
+
+    # Collect all newer cycle references first
+    for root_url in catalog_urls:
+        try:
+            cat = TDSCatalog(root_url)
+            for ref in cat.catalog_refs.values():
+                if "cycle" in ref.title.lower():
+                    cycle_num = extract_cycle_number(ref.title)
+                    if cycle_num >= last_cycle:
+                        all_cycles.append((cycle_num, ref.href))
+        except Exception as e:
+            print(f"Failed to access {root_url}: {e}")
+
+    print(f"{len(all_cycles)} total cycles will be scanned up to/including "
+          f"cycle {last_cycle})")
+
+    # Process each cycle with progress bar
+    with tqdm(total=len(all_cycles), desc="Processing cycles") as progress:
+        for cycle_num, cycle_url in sorted(all_cycles):
+            found_urls = list_nc_files(cycle_url)
+            for url in found_urls:
+                timestamp = extract_first_date(url)
+                if timestamp > last_timestamp:
+                    all_new_urls.append(url)
+            progress.update(1)
+
+    # Deduplicate by filename
+    seen_filenames = set(os.path.basename(u) for u in existing_urls)
+    new_unique_urls = []
+    for url in all_new_urls:
+        fname = os.path.basename(url)
+        if fname not in seen_filenames:
+            new_unique_urls.append(url)
+            seen_filenames.add(fname)
+
+    # Sort by extracted date
+    new_unique_urls.sort(key=extract_first_date)
+
+    # Append to manifest
+    if new_unique_urls:
+        with open(output_file, "a") as f:
+            for url in new_unique_urls:
+                f.write(url + "\n")
+        print(f"Added {len(new_unique_urls)} new entries to manifest.")
+    else:
+        print("No new files to add. Manifest is up to date.")
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def count_cycle_subcatalogs(url):
+    """
+    Count the number of cycle sub-catalogs in a THREDDS catalog.
+
+    Parameters
+    ----------
+    url : str
+        Base catalog url from www.ncei.noaa.gov THREDDS containing "cycle"
+        sub-catalogs.
+
+    Returns
+    -------
+    cycle_num : int
+        Total number of cycle sub-catalogs in base url
+
+    """
+
+    try:
+        cat = TDSCatalog(url)
+        return sum("cycle" in ref.title.lower() for ref in
+                   cat.catalog_refs.values())
+    except Exception:
+        return 0
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def list_nc_files(url, root_base=None, progress=None):
+    """
+    Recursively list all .nc file HTTPServer URLs under a THREDDS catalog.
+    """
+    nc_urls = []
+
+    try:
+        cat = TDSCatalog(url)
+        if root_base is None:
+            root_base = url.rsplit('catalog.xml', 1)[0]
+
+        for _, ds in cat.datasets.items():
+            if 'HTTPServer' in ds.access_urls:
+                full_url = ds.access_urls['HTTPServer']
+                # Specify dodsC for subsequent downloads
+                full_url = full_url.replace("/fileServer/", "/dodsC/")
+                nc_urls.append(full_url)
+
+        for subcat_ref in cat.catalog_refs.values():
+            if "cycle" in subcat_ref.title.lower():
+                nc_urls.extend(list_nc_files(subcat_ref.href, root_base,
+                                             progress))
+                if progress:
+                    progress.update(1)
+
+    except Exception:
+        pass
+
+    return nc_urls
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def extract_first_date(url):
+    """
+    Extract the first occurrence of a datetime stamp in the format
+    YYYYMMDD_HHMMSS from the filename.
+    Returns a datetime object if found, otherwise a fallback datetime far in
+    the future.
+
+    Parameters
+    ----------
+    url : str
+        URL containing Jason filename from www.ncei.noaa.gov THREDDS catalog
+
+    Returns
+    -------
+    first_date : datetime.datetime
+        Start date of the Jason file
+
+    """
+
+    fname = os.path.basename(url)
+    match = re.search(r'(\d{8}_\d{6})', fname)
+    if match:
+        try:
+            return datetime.datetime.strptime(match.group(1), "%Y%m%d_%H%M%S")
+        except ValueError:
+            pass
+    return datetime.datetime.max  # fallback if no valid date is found
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def extract_cycle_number(url):
+    """
+    Extracts the cycle number from a URL string (e.g., 'cycle345' → 345). Used
+    to update Jason file manifest from last recorded cycle.
+    Returns -1 if not found.
+
+    Parameters
+    ----------
+    url : str
+        URL containing Jason filename from www.ncei.noaa.gov THREDDS catalog
+
+    Returns
+    -------
+    cycle_num : int
+        Cycle number from Jason filename URL
+
+    """
+    match = re.search(r'cycle(\d{3})', url)
+    return int(match.group(1)) if match else -1
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def filter_urls_by_timerange(manifest_filepath,
+                             user_start,
+                             user_finish,
+                             sat_names):
+    """
+    Reads a .txt file of URLs and returns only those where the file's time
+    range overlaps with the user-specified datetime window.
+
+    Parameters
+    ----------
+        manifest_filepath : str
+            Path to Jason file manifest (.txt file containing URLs)
+        user_start : datetime.datetime
+            Start date and time for the validation period
+        user_finish : datetime.datetime
+            End date and time for the validation period
+        sat_names : np.ndarray
+            Array of satellite name substrings to include (e.g., "JA2", "JA3")
+
+    Returns
+    -------
+        matching_urls : list of tuples
+            Each tuple contains (url, start_datetime, end_datetime) for files
+            that overlap with the specified time window.
+    """
+    # Regex pattern to extract start and end datetimes from the filename
+    pattern = r'_(\d{8})_(\d{6})_(\d{8})_(\d{6})\.nc'
+
+    # Initialize list to hold matching URL entries
+    matching_urls = []
+
+    # Open and read the input file line by line
+    with open(manifest_filepath, 'r') as file:
+        # Print out progress statements to user
+        print(f"\nFiltering for overlap with user-specified time window:"
+              f"{user_start} to {user_finish}.")
+        lines = file.readlines()
+        print(f"Searching {len(lines)} URLs from manifest.")
+
+        for line in tqdm(lines, desc="Filtering URLs", unit="file"):
+            url = line.strip()
+
+            # Skip if the URL does not contain any of the desired sat names
+            if not any(sat in url for sat in sat_names):
+                continue
+
+            # Try to extract date info from the filename
+            match = re.search(pattern, url)
+            if match:
+                start_str = match.group(1) + match.group(2)
+                end_str = match.group(3) + match.group(4)
+                start_dt = datetime.datetime.strptime(start_str,
+                                                      '%Y%m%d%H%M%S')
+                end_dt = datetime.datetime.strptime(end_str, '%Y%m%d%H%M%S')
+
+                # Include file if it overlaps with the specified time window
+                if end_dt >= user_start and start_dt <= user_finish:
+                    matching_urls.append((url, start_dt, end_dt))
+
+    # Return the list of matching URLs and their associated datetimes
+    print(f"Found {len(matching_urls)} matching files.")
+    return matching_urls
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def make_empty_dict_data_jason():
+    """Make empty dictionary to collect Jason-2 and -3 data.
+
+    Returns
+    -------
+    data : dict
+        Dictionary with empty elements.
+    """
+
+    empty = np.empty((0))
+    data = {'dtime': np.empty(0, dtype='datetime64[s]'),
+            'TEC': empty,
+            'lon': empty,
+            'lat': empty,
+            'name': np.empty(0, dtype='<U3')}
+    return data
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def read_jason2_file(j2url):
+    """Read in relevant data from Jason-2 OPeNDAP URL
+    See OSTM/Jason-2 Products Handbook Section 4.2.5 for details.
+
+    Parameters
+    ----------
+    j2url : str
+        Jason-2 OPeNDAP url
+
+    Returns
+    -------
+    data_all : dict
+        Dictionary with all the data from a single file combined.
+
+    """
+
+    # Open Jason-2 netCDF with OPeNDAP URL
+    j2file = netCDF4.Dataset(j2url, 'r')
+
+    # Read spatiotemporal variables
+    time = j2file.variables['time'][:]
+    time = time.filled(np.nan)
+    # Define the reference (epoch)
+    epoch = np.datetime64('2000-01-01T00:00:00')
+    time = (epoch + time.astype('timedelta64[s]'))
+
+    lon = j2file.variables['lon'][:]
+    lon = lon.filled(np.nan)
+    lon = adjust_lon(lon, 'to180')
+    lat = j2file.variables['lat'][:]
+    lat = lat.filled(np.nan)
+
+    # Read Jason-2 ku-band delay and fill missing
+    iono_ku = j2file.variables['iono_corr_alt_ku'][:]
+    iono_ku = iono_ku.filled(np.nan)
+
+    # Flags
+    # Surface type flag
+    surf_flag = j2file.variables['surface_type'][:]
+    surf_flag = surf_flag.filled(np.nan)
+    # Open sea ice flag
+    ice_flag = j2file.variables['ice_flag'][:]
+    ice_flag = ice_flag.filled(np.nan)
+    # RMS of the "ocean" altimeter range
+    rms_flag = j2file.variables['range_rms_ku'][:]
+    rms_flag = rms_flag.filled(np.nan)
+    # Number of valid points used to compute the “ocean” altimeter range
+    points_flag = j2file.variables['range_numval_ku'][:]
+    points_flag = points_flag.filled(np.nan)
+
+    # Only measurements collected a) over the ocean, b) not on ice, c) for
+    # which the range at 1 Hz was computed with enough valid range observations
+    # at 20 Hz (RMS below a threshold 0.2 and a number of 20 Hz observations
+    # above a threshold of 10) and d) for which the ionospheric correction
+    # could be computed using equation 1 (its values different than Default
+    # Value (DV)) are selected.
+    valid = (
+        (surf_flag == 0)
+        & (ice_flag == 0)
+        & (rms_flag > 0)
+        & (rms_flag < 0.2)
+        & (points_flag > 10)
+    )
+
+    iono_ku[~valid] = np.nan
+
+    # Filter data
+    iono_ku_filt, filt_flag = robust_iterative_filter(iono_ku)
+    iono_ku_filt[filt_flag] = np.nan
+
+    # Compute TEC from Jason-2 ku-band delay
+    tec = compute_jason_tec(iono_ku_filt)
+    j2_sat_tec_bias = -3.5
+    tec = tec + j2_sat_tec_bias
+    tec[tec < 0] = 0
+
+    # Initialize empy data dictionary
+    data_all = make_empty_dict_data_jason()
+
+    # Remove entries with nans
+    delInd = np.isnan(time) | np.isnan(lat) | np.isnan(lon) | np.isnan(tec)
+    time = np.delete(time, delInd)
+    lat = np.delete(lat, delInd)
+    lon = np.delete(lon, delInd)
+    tec = np.delete(tec, delInd)
+
+    # Fill data dictionary
+    N = len(lat)
+    data_all['dtime'] = time
+    data_all['lat'] = lat
+    data_all['lon'] = lon
+    data_all['TEC'] = tec
+    data_all['name'] = np.full(N, 'JA2', dtype='<U3')
+
+    return data_all
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def read_jason3_file(j3url):
+    """Read in relevant data from Jason-3 OPeNDAP URL.
+    See OSTM/Jason-3 Products Handbook for details.
+
+    Parameters
+    ----------
+    j3url : str
+        Jason-3 OPeNDAP url
+
+    Returns
+    -------
+    data_all : dict
+        Dictionary with all the data from a single file combined.
+
+    """
+
+    #  Open Jason-3 netCDF with OPeNDAP URL
+    j3file = netCDF4.Dataset(j3url, 'r')
+
+    # Read spatiotemporal variables
+    time = j3file.variables['data_01%2ftime'][:]
+    time = time.filled(np.nan)
+    # Define the reference (epoch)
+    epoch = np.datetime64('2000-01-01T00:00:00')
+    time = (epoch + time.astype('timedelta64[s]'))
+
+    lon = j3file.variables['data_01%2flongitude'][:]
+    lon = lon.filled(np.nan)
+    lon = adjust_lon(lon, 'to180')
+    lat = j3file.variables['data_01%2flatitude'][:]
+    lat = lat.filled(np.nan)
+
+    # Read Jason-3 ku-band delay and fill missing
+    iono_ku = j3file.variables['data_01%2fku%2fiono_cor_alt'][:]
+    iono_ku = iono_ku.filled(np.nan)
+
+    # Flags
+    # Surface type flag
+    surf_flag = j3file.variables['data_01%2fsurface_classification_flag'][:]
+    surf_flag = surf_flag.filled(np.nan)
+    # Open sea ice flag
+    ice_flag = j3file.variables['data_01%2fice_flag'][:]
+    ice_flag = ice_flag.filled(np.nan)
+    # RMS of the "ocean" altimeter range
+    rms_flag = j3file.variables['data_01%2fku%2frange_ocean_rms'][:]
+    rms_flag = rms_flag.filled(np.nan)
+    # Number of valid points used to compute the “ocean” altimeter range
+    points_flag = j3file.variables['data_01%2fku%2frange_ocean_numval'][:]
+    points_flag = points_flag.filled(np.nan)
+
+    # Only measurements collected a) over the ocean, b) not on ice, c) for
+    # which the range at 1 Hz was computed with enough valid range observations
+    # at 20 Hz (RMS below a threshold 0.2 and a number of 20 Hz observations
+    # above a threshold of 10) and d) for which the ionospheric correction
+    # could be computed using equation 1 (its values different than Default
+    # Value (DV)) are selected.
+    valid = (
+        (surf_flag == 0)
+        & (ice_flag == 0)
+        & (rms_flag > 0)
+        & (rms_flag < 0.2)
+        & (points_flag > 10)
+    )
+
+    iono_ku[~valid] = np.nan
+
+    # Filter data
+    iono_ku_filt, filt_flag = robust_iterative_filter(iono_ku)
+    iono_ku_filt[filt_flag] = np.nan
+
+    # Compute TEC from Jason-3 ku-band delay
+    tec = compute_jason_tec(iono_ku_filt)
+    j3_sat_tec_bias = -1
+    tec = tec + j3_sat_tec_bias
+    tec[tec < 0] = 0
+
+    # Initialize empy data dictionary
+    data_all = make_empty_dict_data_jason()
+
+    # Remove entries with nans
+    delInd = np.isnan(time) | np.isnan(lat) | np.isnan(lon) | np.isnan(tec)
+    time = np.delete(time, delInd)
+    lat = np.delete(lat, delInd)
+    lon = np.delete(lon, delInd)
+    tec = np.delete(tec, delInd)
+
+    # Fill Jason-3 data dictionary
+    N = len(lat)
+    data_all['dtime'] = time
+    data_all['lat'] = lat
+    data_all['lon'] = lon
+    data_all['TEC'] = tec
+    data_all['name'] = np.full(N, 'JA3', dtype='<U3')
+
+    return data_all
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def robust_iterative_filter(
+    data_raw,
+    INIT_SIGMA=5,
+    DATA_GAP_MAX=0,
+    MEDIAN_NB_PTS=30,
+    MEDIAN_NB_PTS_MIN=30,
+    MEDIAN_NB_PTS_MEAN=0,
+    LANCZOS_NB_PTS=50,
+    LANCZOS_NB_PTS_CUTOFF=50,
+    LANCZOS_NB_PTS_MIN=10,
+    CONVERGENCE_THRESHOLD=0
+):
+    data = data_raw.copy()
+    outlier_mask = np.zeros(len(data), dtype=bool)
+
+    # Step 2: Initial global sigma outlier detection
+    mean = np.nanmean(data)
+    std = np.nanstd(data)
+    init_outliers = np.abs(data - mean) > INIT_SIGMA * std
+    outlier_mask |= init_outliers
+    data[init_outliers] = np.nan
+
+    # prev_outlier_count = np.sum(outlier_mask)
+
+    # Iterate steps 3–7
+    while True:
+        # Step 3: Remove current outliers (already done by setting to NaN)
+
+        # Step 4: Fill small gaps
+        if DATA_GAP_MAX > 0:
+            data = fill_small_gaps(data, DATA_GAP_MAX)
+
+        # Step 5: Median Filter
+        data_median = apply_median_filter(data, MEDIAN_NB_PTS,
+                                          MEDIAN_NB_PTS_MIN,
+                                          MEDIAN_NB_PTS_MEAN)
+
+        # Step 6: Lanczos Filter
+        data_lanczos = lanczos_filter(data_median, LANCZOS_NB_PTS,
+                                      LANCZOS_NB_PTS_CUTOFF,
+                                      LANCZOS_NB_PTS_MIN)
+
+        # Step 7: Flag outliers based on residual
+        residual = data_raw - data_lanczos
+        residual_std = np.nanstd(residual)
+        new_outliers = np.abs(residual) > 3 * residual_std
+        new_outliers &= ~outlier_mask  # Don't double-flag
+
+        outlier_mask |= new_outliers
+        data = data_raw.copy()
+        data[outlier_mask] = np.nan
+
+        # Step 8: Check convergence
+        percent_outliers = np.sum(outlier_mask) / len(data_raw)
+        if percent_outliers <= CONVERGENCE_THRESHOLD:
+            break
+        if np.sum(new_outliers) == 0:
+            break  # Converged
+
+    return data_lanczos, outlier_mask
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def fill_small_gaps(data, max_gap_size):
+    """Linearly interpolate gaps smaller than max_gap_size."""
+    # data_filled = data.copy()
+    isnan = np.isnan(data)
+    idx = np.arange(len(data))
+    valid = ~isnan
+
+    # Interpolate all
+    interp_all = np.interp(idx, idx[valid], data[valid])
+
+    # Re-mask large gaps
+    nan_runs = np.flatnonzero(np.diff(np.concatenate(([0], isnan.view(np.int8),
+                                                      [0]))))
+    gap_starts = nan_runs[::2]
+    gap_ends = nan_runs[1::2]
+
+    for start, end in zip(gap_starts, gap_ends):
+        gap_len = end - start
+        if gap_len > max_gap_size:
+            interp_all[start:end] = np.nan
+
+    return interp_all
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def apply_median_filter(data, half_width, min_valid, mean_width=0):
+    """Median filter with optional averaging.
+       Preserves NaNs in the original data.
+    """
+    result = np.full_like(data, np.nan)
+    N = len(data)
+
+    for i in range(N):
+        if np.isnan(data[i]):
+            continue  # preserve NaNs: don't filter at NaN locations
+
+        start = max(0, i - half_width)
+        end = min(N, i + half_width + 1)
+        window = data[start:end]
+        valid = window[~np.isnan(window)]
+
+        if len(valid) >= min_valid:
+            if mean_width > 0:
+                center = len(valid) // 2
+                s = max(0, center - mean_width)
+                e = min(len(valid), center + mean_width + 1)
+                result[i] = np.mean(np.sort(valid)[s:e])
+            else:
+                result[i] = np.median(valid)
+
+    return result
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def lanczos_filter(signal, N, cutoff, min_valid=3):
+    """Apply Lanczos filter with given parameters, ignoring NaNs."""
+    kernel = compute_lanczos_kernel(N, cutoff)
+    filtered = np.full_like(signal, np.nan)
+
+    for i in range(len(signal)):
+        start = max(i - N, 0)
+        end = min(i + N + 1, len(signal))
+        segment = signal[start:end]
+        k_segment = kernel[N - (i - start):N + (end - i)]
+
+        valid_mask = ~np.isnan(segment)
+        if np.sum(valid_mask) >= min_valid:
+            filtered[i] = (np.nansum(segment[valid_mask]
+                           * k_segment[valid_mask])
+                           / np.sum(k_segment[valid_mask]))
+    return filtered
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def compute_lanczos_kernel(N, cutoff):
+    """Build a symmetric Lanczos kernel with half-width N and cutoff."""
+    x = np.arange(-N, N + 1)
+    sinc_filter = np.sinc(x / cutoff)
+    lanczos_window = np.sinc(x / N)
+    kernel = sinc_filter * lanczos_window
+    return kernel / kernel.sum()
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def compute_jason_tec(iono_ku_delay):
+    """Jason TEC computation.
+    See OSTM/Jason-2 Products Handbook Section 4.2.5 for details.
+
+    Parameters
+    ----------
+    iono_ku_delay : float
+        Jason-2 or Jason-3 ku-band ionospheric delay
+
+    Returns
+    -------
+    tec : float
+        Total electron content in TECU
+
+    """
+
+    scale_topex = 13.575E9 * 13.575E9 / 40.3  # f^2/40.3
+    tec = -iono_ku_delay * scale_topex * 1E-16  # conversion to TECu
+    return tec
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def concat_data_dicts(A, B):
+    """Concatenate two dictionaries with the same field names.
+
+    Parameters
+    ----------
+    A : dict
+        Dictionary with identical field names to B
+    B : dict
+        Dictionary with identical field names to A
+
+    Returns
+    -------
+    C : dict
+        Dictionary with all the data from A and B combined (A preceeding B)
+
+    """
+    C = {}
+
+    for k in A:
+        a_val = A[k]
+        b_val = B[k]
+
+        if isinstance(a_val, np.ndarray) and isinstance(b_val, np.ndarray):
+            if a_val.dtype == b_val.dtype:
+                C[k] = np.concatenate([a_val, b_val])
+            else:
+                raise TypeError(f"Field '{k}' dtype mismatch: {a_val.dtype} vs"
+                                f"{b_val.dtype}")
+        else:
+            raise ValueError(f"Field '{k}' is not a numpy array in both dicts")
+
+    return C
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def mask_dict(data_raw, mask):
+    """
+    Masks data within all data dictionary fields
+
+    Parameters:
+    -----------
+    data_raw : dict of arrays (np.ndarray or pd.Series)
+        Dictionary of data fields to downsample.
+    mask : 0s and 1s
+        1 for keep, 0 for discard
+
+    Returns:
+    --------
+    dict_resamp : dict
+        Dictionary with cleaned out fields
+    """
+
+    data_clean = {}
+    for key, data in data_raw.items():
+        data_clean[key] = data[mask]
+    return data_clean
