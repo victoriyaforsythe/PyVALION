@@ -10,6 +10,7 @@ import os
 
 import cartopy.crs as ccrs
 import cartopy.mpl.ticker as cticker
+import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -191,4 +192,132 @@ def plot_individual_mean_residuals(res_ion,
         figname = os.path.join(plot_dir, "_".join([key + plot_name]))
         plt.savefig(figname, bbox_inches='tight', facecolor='white')
         logger.info('Figure Ionosonde Mean Residuals is saved at: ', figname)
+    return
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def plot_TEC_residuals_map(alat,
+                           alon,
+                           residuals,
+                           dtime,
+                           save_option=False,
+                           save_dir='',
+                           plot_name='Residuals_Map.pdf'):
+    """Plot residual map for TEC
+
+    Parameters
+    ----------
+    alon : array-like (float)
+        Flattened array of longitudes in degrees.
+    alat : array-like (float)
+        Flattened array of latitudes in degrees.
+    residuals : dict
+        Dictionary with TEC residuals.
+    model_units: dict
+        Dictionary with units for each key in residuals.
+    dtime : datetime.datetime
+        Datetime of the validation day.
+    plot_dir : str
+        Direction where to save the figure.
+    plot_name : str
+        Output name, without directory, for the saved figure
+        (default='Residual_Map.pdf').
+    """
+
+    projection1 = ccrs.PlateCarree()
+    fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(9, 3),
+                           constrained_layout=True,
+                           subplot_kw={'projection': projection1})
+    plt.xlim([-180, 180])
+    plt.ylim([-90, 90])
+    ax_plot = ax
+    ax_plot.set_xticks(np.arange(-180, 180 + 45, 90), crs=ccrs.PlateCarree())
+    ax_plot.set_yticks(np.arange(-90, 90 + 45, 45), crs=ccrs.PlateCarree())
+    ax_plot.set_xlabel('Geo Lon (°)')
+    ax_plot.set_ylabel('Geo Lat (°)')
+    ax_plot.set_facecolor('lightgray')
+    lon_formatter = cticker.LongitudeFormatter()
+    lat_formatter = cticker.LatitudeFormatter()
+    ax_plot.xaxis.set_major_formatter(lon_formatter)
+    ax_plot.yaxis.set_major_formatter(lat_formatter)
+    vmax = 30
+    norm = colors.Normalize(vmin=-vmax, vmax=vmax)
+    sc = ax_plot.scatter(alon, alat, c=residuals['TEC'], s=3,
+                         cmap='seismic', norm=norm)
+    ax_plot.coastlines(lw=0.5, color='black', zorder=1)
+    if np.size(dtime) > 1:
+        ax_plot.set_title('Residuals, ' + dtime[0].strftime('%Y%m%d') + ' - '
+                          + dtime[-1].strftime('%Y%m%d'))
+    else:
+        ax_plot.set_title('Residuals, ' + dtime.strftime('%Y%m%d'))
+    cbar = fig.colorbar(sc, ax=ax_plot)
+    cbar.set_label('TEC Residuals (TECU)')
+
+    if save_option:
+        # Save figure
+        figname = os.path.join(save_dir, plot_name + '.pdf')
+        plt.savefig(figname, bbox_inches='tight', facecolor='white')
+        print('Figure Residual Map is saved at: ', figname)
+    return
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def plot_TEC_residuals_histogram(residuals,
+                                 model_units,
+                                 dtime,
+                                 save_option=False,
+                                 save_dir='',
+                                 plot_name='Residuals.pdf'):
+    """Plot residuals for TEC as a histogram.
+
+    Parameters
+    ----------
+    residuals : dict
+        Dictionary with residuals.
+    model_units: dict
+        Dictionary with units for each key in residuals.
+    dtime : datetime.datetime
+        Datetime of the validation day(s).
+    plot_dir : str
+        Direction where to save the figure.
+    plot_name : str
+        Output name, without directory, for the saved figure
+        (default='Residuals.pdf').
+    """
+
+    fig, ax = plt.subplots(1, 1, sharex=False, sharey=False)
+    if np.size(dtime) > 1:
+        fig.suptitle('Residuals, ' + dtime[0].strftime('%Y%m%d') + ' - '
+                     + dtime[-1].strftime('%Y%m%d'))
+    else:
+        fig.suptitle('Residuals, ' + dtime.strftime('%Y%m%d'))
+
+    fig.set_size_inches(3, 3)
+    keys_list = 'TEC'
+
+    ax_plot = ax
+    ax_plot.set_facecolor('lightgray')
+    ax_plot.set_xlabel(keys_list
+                       + ' (' + model_units[keys_list] + ')')
+    ax_plot.set_ylabel('Number of Obs')
+    ax_plot.axvline(x=0, c='black', zorder=2, linestyle='dashed',
+                    linewidth=0.5)
+    # Plot the histogram of the model residuals
+    ax_plot.hist(residuals[keys_list], color='red',
+                 bins=50, zorder=1)
+    # Making x-axis symmetric
+    bound = 30
+    xticks = np.arange(-bound, bound + 1, 10)
+    ax_plot.set_xticks(xticks)
+    ax_plot.set_xlim((-bound, bound))
+    plt.tight_layout()
+
+    if save_option:
+        # Save figure
+        figname = os.path.join(save_dir, plot_name + '.pdf')
+        plt.savefig(figname, bbox_inches='tight', facecolor='white')
+        print('Figure Residuals is saved at: ', figname)
+
     return
