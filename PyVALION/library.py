@@ -24,6 +24,7 @@ import PyVALION
 from PyVALION import logger
 
 from PyIRI.main_library import adjust_longitude as adjust_lon
+from PyIRI.main_library import solzen_timearray_grid
 
 
 # -----------------------------------------------------------------------------
@@ -1715,3 +1716,384 @@ def mask_dict(data_raw, mask):
     for key, data in data_raw.items():
         data_clean[key] = data[mask]
     return data_clean
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def downsample_Jason_TEC(data_all,
+                         ddeg,
+                         save_dir='',
+                         name_run='',
+                         save_data_option=False):
+    """Downsample all fields in a Jason data dictionary by a specified degree.
+
+    Parameters
+    ----------
+    data_all : dict
+        Dictionary of raw Jason data.
+    ddeg : float
+        Model resolution in degrees.
+    save_dir : str, optional
+        Directory where the resampled data will be saved. Defaults to ''.
+    name_run : str, optional
+        String appended to the output filename. Defaults to ''.
+    save_data_option : bool, optional
+        If True, save data as a pickle (.p) file in `save_dir`. Defaults to
+        False.
+
+    Returns
+    -------
+    dict
+        Dictionary of Jason data with downsampled fields.
+    """
+
+    # load spatiotemp data from dictionary
+    lat_j = data_all['lat']
+    lon_j = data_all['lon']
+    dtime_j = data_all['dtime']
+
+    # Determine a resampling period estimate from an hour of data
+    hr1_start = dtime_j[0]
+    hr1_end = hr1_start + pd.Timedelta(hours=1)
+    # Indices for an hour of data
+    hr1_ind = ((dtime_j >= hr1_start) & (dtime_j <= hr1_end))
+    # Select just 1st hr of data
+    lon_hr1 = lon_j[hr1_ind]
+    lat_hr1 = lat_j[hr1_ind]
+
+    # Unique String Resampling
+    coor_str, _, _ = round_and_stringify(lat_hr1,
+                                         lon_hr1,
+                                         ddeg)
+
+    _, unq_ind = np.unique(coor_str, return_index=True)
+
+    # Determine estimate of resampling step
+    N_1hr = len(lat_hr1)
+    N_1hr_resamp = len(unq_ind)
+    N_resamp = np.round(N_1hr / N_1hr_resamp).astype(int)
+    print('\nResampling Jason TEC data for ', f"{ddeg:.2f}",
+          ' degree resolution.')
+
+    data_resamp = downsample_dict(data_all, N_resamp)
+
+    if save_data_option:
+        # Jason resample data filename
+        ddeg_str = f"{ddeg:.2f}"
+        file_str_resample = ('Jason_TEC_resampled_' + ddeg_str + 'res_'
+                             + name_run + '.p')
+        file_path_resample = os.path.join(save_dir, file_str_resample)
+        print(f"Saving Downsampled Jason TEC data to: '{file_path_resample}'")
+        pickle.dump(data_resamp, open(file_path_resample, "wb"))
+
+    print('\n')
+    return data_resamp
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def round_and_stringify(lat, lon, rounding_interval):
+    """Round latitude and longitude values and generate string identifiers.
+
+    Rounds latitude and longitude values to the nearest multiple of a specified
+    model resolution and returns a string array used to determine the
+    resampling rate of Jason data.
+
+    Parameters
+    ----------
+    lat : ndarray of float
+        Latitude values.
+    lon : ndarray of float
+        Longitude values.
+    rounding_interval : float
+        Model resolution in degrees.
+
+    Returns
+    -------
+    coor_str : ndarray of str
+        Array of strings containing rounded coordinates. Values are scaled to
+        the nearest integer by a scaling factor. For example, if
+        `rounding_interval=0.25`, values will be scaled by 4.
+    lat_rounded : ndarray of float
+        Array of rounded latitude values.
+    lon_rounded : ndarray of float
+        Array of rounded longitude values.
+    """
+
+    # Round to nearest rounding_interval
+    lat_rounded = np.round(lat / rounding_interval) * rounding_interval
+    lon_rounded = np.round(lon / rounding_interval) * rounding_interval
+
+    # Scale to integer to avoid float issues
+    # (e.g., 12.5 -> 1250 if interval=0.01)
+    scale_factor = int(1 / rounding_interval) if rounding_interval < 1 else 1
+    lat_int = (lat_rounded * scale_factor).astype(int)
+    lon_int = (lon_rounded * scale_factor).astype(int)
+
+    # Compute required zero-padding width
+    pad_width = max(len(str(np.max(np.abs(lat_int)))),
+                    len(str(np.max(np.abs(lon_int)))))
+    # Include another place in string for minus sign
+    pad_width = pad_width + 1
+
+    # Convert to strings with zero-padding
+    lat_str = np.char.zfill(lat_int.astype(str), pad_width)
+    lon_str = np.char.zfill(lon_int.astype(str), pad_width)
+
+    # Combine into coordinate string
+    coor_str = np.char.add(np.char.add(lat_str, '_'), lon_str)
+
+    return coor_str, lat_rounded, lon_rounded
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def downsample_dict(data_raw, N):
+    """Downsample all fields in a dictionary by keeping every Nth point.
+
+    Parameters
+    ----------
+    data_raw : dict of array-like (np.ndarray or pd.Series)
+        Dictionary of data fields to downsample.
+    N : int
+        Step size indicating how frequently to sample. Keeps every Nth point.
+
+    Returns
+    -------
+    dict_resamp : dict
+        Dictionary with downsampled fields.
+    """
+
+    data_resamp = {}
+    for key, data in data_raw.items():
+        data_resamp[key] = data[::N]
+    return data_resamp
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def find_Jason_G_and_y(adtime,
+                       alon,
+                       alat,
+                       data):
+    """Create geometry matrix G and observation vector y.
+
+    Parameters
+    ----------
+    adtime : array-like of datetime.datetime
+        Array of time stamps for the model.
+    alon : array-like
+        Array of model longitudes in degrees (-180 to 180).
+    alat : array-like
+        Array of model latitudes in degrees (-90 to 90).
+    data : dict
+        Dictionary of Jason data produced by `download_Jason_TEC` or
+        `downsample_Jason_TEC`.
+
+    Returns
+    -------
+    y : dict
+        Dictionary containing observation vectors with keys:
+        TEC : array-like
+            Jason total electron content in TECU.
+        lon : array-like
+            Observation longitudes in degrees.
+        lat : array-like
+            Observation latitudes in degrees.
+        name : array-like
+            Jason satellite names.
+        time : array-like
+            Observation times.
+    units : dict
+        Dictionary mapping keys in `y` to their units as strings.
+    G : ndarray
+        Geometry matrix with shape (N_obs, N_time, N_lat, N_lon).
+    """
+    # Look for 15/2 min data around
+    adtime0 = adtime - datetime.timedelta(minutes=15) / 2.
+    adtime1 = adtime + datetime.timedelta(minutes=15) / 2.
+
+    # Empty arrays for concatenation
+    ay_tec = np.empty((0))
+    ay_lon = np.empty((0))
+    ay_lat = np.empty((0))
+    ay_time = np.empty((0))
+    ay_name = np.empty((0))
+
+    # Determine total number of samples in y
+    n_tot = np.where((data['dtime'] >= adtime0[0])
+                     & (data['dtime'] < adtime1[-1]))[0]
+    n_tot = n_tot.size
+    # intialize G and sample iterator (i)
+    i = 0
+    # Make array for geometry matrix
+    G = np.zeros((n_tot, adtime.size, alat.size, alon.size))
+
+    # Cycle through the array of time frames in a selected day
+    for i_t in range(0, adtime.size):
+        # Find data within selected time range
+        a = np.where((data['dtime'] >= adtime0[i_t])
+                     & (data['dtime'] < adtime1[i_t]))[0]
+
+        # Loop through observations within timeframe
+        for i_ob in range(0, a.size):
+            # Copy over obs data
+            ob_lat = data['lat'][a[i_ob]]
+            ob_lon = data['lon'][a[i_ob]]
+            ob_tec = data['TEC'][a[i_ob]]
+            ob_name = data['name'][a[i_ob]]
+            ob_time = data['dtime'][a[i_ob]]
+            # Concatenate obs, name, position, and time arrays
+            ay_tec = np.concatenate((ay_tec, ob_tec), axis=None)
+            ay_lat = np.concatenate((ay_lat, ob_lat), axis=None)
+            ay_lon = np.concatenate((ay_lon, ob_lon), axis=None)
+            ay_name = np.concatenate((ay_name, ob_name), axis=None)
+            ay_time = np.concatenate((ay_time, ob_time), axis=None)
+
+            # Update G matrix
+            # Select nearest model grid element to obs lat/lon
+            i_lat = nearest_element(alat, ob_lat)
+            i_lon = nearest_element(alon, ob_lon)
+
+            # Form G matrix
+            G[i, i_t, i_lat, i_lon] = 1.
+            i = i + 1
+
+    print('G has shape [N_obs, N_time, N_lat, N_lon] = ', G.shape)
+
+    # Write observation vectors to the dictionary
+    y = {'TEC': ay_tec, 'lon': ay_lon, 'lat': ay_lat,
+         'time': ay_time, 'name': ay_name}
+
+    units = {'TEC': 'TECU', 'lon': '°', 'lat': '°',
+             'time': 'datetime object', 'name': 'unitless'}
+
+    return y, units, G
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def find_Jason_residuals(model, G, obs_data, units):
+    """Find residuals from model data for the given field and forward operator.
+
+    Parameters
+    ----------
+    model : dict
+        Dictionary with model parameters in shape [N_time, N_lat, N_lon].
+    G : array-like
+        Geometry matrix [N_obs, N_time, N_lat, N_lon].
+    obs_data : dict
+        Dictionary that contains observation vectors:
+        TEC : array-like
+            Array of Jason total electron content in TECU.
+        lon : array-like
+            Array of observation longitude in degrees.
+        lat : array-like
+            Array of observation latitudes in degrees.
+        name : array-like
+            Array of Jason satellite names.
+        time : array-like
+            Array of observation time.
+    units : dict
+        Dictionary with strings of units for the keys in dict y.
+
+    Returns
+    -------
+    model_data : dict
+        Array of model data, the expected data according to the model.
+    residuals : dict
+        Dictionary containing residuals (obs_data - model_data).
+    model_units : dict
+        Dictionary with strings of units for the keys in dict model_data.
+    """
+
+    # The dictionary model_data will be used to store model predictions at
+    # observation points
+    model_data = {}
+    # The dictionary residuals will store the differences between the observed
+    # data and the model predictions
+    residuals = {}
+    # The dictionary model_units will store the units (as strings) for each key
+    # in the model_data dictionary
+    model_units = {}
+
+    # Loop through all parameters in the model dictionary to extract model data
+    # at observation points
+    for key in model:
+        print('key= ', key)
+        model_data[key] = find_model_data(model[key], G)
+        residuals[key] = obs_data[key] - model_data[key]
+        model_units[key] = units[key]
+
+    return model_data, residuals, model_units
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def compute_solzen(time_start, ddeg, adtime, alon, alat):
+    """Compute the solar zenith angle (SZA) for given times and locations.
+
+    Parameters
+    ----------
+    time_start : datetime.datetime
+        Single datetime specifying mean date for SZA function.
+    adtime : datetime.datetime
+        Array of time points with length N_time, used for calculating aUT.
+    alon : array-like (float)
+        Flattened array of longitudes in degrees with length N_loc.
+    alat : array-like (float)
+        Flattened array of latitudes in degrees with length N_loc.
+
+    Returns
+    -------
+    solzen : array-like
+        Solar zenith angle with shape [N_time, N_loc].
+
+    Raises
+    ------
+    ValueError
+        If the input arrays are not the same shape.
+    OR
+        If more than one day of data is inputted.
+    """
+
+    # Extract time info from datetime
+    year_unq = np.unique(time_start.year)
+    month_unq = np.unique(time_start.month)
+    day_unq = np.unique(time_start.day)
+    # Check that only a single day has been inputted
+    if ((year_unq.size == 1) & (month_unq.size == 1) & (day_unq.size == 1)):
+        year = int(year_unq[0])
+        month = int(month_unq[0])
+        day = int(day_unq[0])
+        aUT = adtime.hour + adtime.minute / 60. + adtime.second / 3600.
+    else:
+        raise ValueError('More than one day of data inputted as time_start.')
+
+    # Fill in a grid of solzen time array
+    alon_grid = np.arange(-180, 180 + ddeg, ddeg)
+    alat_grid = np.arange(-90, 90 + ddeg, ddeg)
+    alon_grid_2d, alat_grid_2d = np.meshgrid(alon_grid, alat_grid)
+    alon_grid_1d = np.reshape(alon_grid_2d, alon_grid_2d.size)
+    alat_grid_1d = np.reshape(alat_grid_2d, alat_grid_2d.size)
+
+    # Compute solar zenith angle
+    solzen_grid, _, _ = solzen_timearray_grid(year, month, day, aUT,
+                                              alon_grid_1d,
+                                              alat_grid_1d)
+
+    # check size of the grid arrays
+    if alon.size != alat.size:
+        raise ValueError('`alon` and `alat` sizes are  not the same')
+
+    solzen_grid = np.reshape(solzen_grid,
+                             (len(aUT), len(alat_grid), len(alon_grid)))
+
+    # Find nearest elements
+    solzen = np.full_like(aUT, np.nan)
+    for it in range(len(aUT)):
+        i_lat = PyVALION.library.nearest_element(alat_grid, alat[it])
+        i_lon = PyVALION.library.nearest_element(alon_grid, alon[it])
+        solzen[it] = solzen_grid[it, i_lat, i_lon]
+
+    return solzen
