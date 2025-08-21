@@ -203,7 +203,7 @@ def plot_TEC_residuals_map(alat,
                            dtime,
                            save_option=False,
                            save_dir='',
-                           plot_name='Residuals_Map.pdf'):
+                           plot_name='TEC_Residuals_Map'):
     """Plot residual map for TEC.
 
     Parameters
@@ -222,7 +222,7 @@ def plot_TEC_residuals_map(alat,
         Direction where to save the figure.
     plot_name : str
         Output name, without directory, for the saved figure
-        (default='Residual_Map.pdf').
+        (default='TEC_Residuals_Map.pdf').
     """
 
     projection1 = ccrs.PlateCarree()
@@ -269,7 +269,7 @@ def plot_TEC_residuals_histogram(residuals,
                                  dtime,
                                  save_option=False,
                                  save_dir='',
-                                 plot_name='Residuals.pdf'):
+                                 plot_name='TEC_Residuals'):
     """Plot residuals for TEC as a histogram.
 
     Parameters
@@ -284,7 +284,7 @@ def plot_TEC_residuals_histogram(residuals,
         Direction where to save the figure.
     plot_name : str
         Output name, without directory, for the saved figure
-        (default='Residuals.pdf').
+        (default='TEC_Residuals.pdf').
     """
 
     fig, ax = plt.subplots(1, 1, sharex=False, sharey=False)
