@@ -204,7 +204,7 @@ def plot_TEC_residuals_map(alat,
                            save_option=False,
                            save_dir='',
                            plot_name='Residuals_Map.pdf'):
-    """Plot residual map for TEC
+    """Plot residual map for TEC.
 
     Parameters
     ----------
