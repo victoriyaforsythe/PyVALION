@@ -35,7 +35,7 @@ pip install .
 
 See the documentation for details about the required dependencies.
 
-# Example Workflow
+# Example Workflow for GIRO parameter Validation
 
 1. Create the model output dictionary
 Record your model output into a dictionary called model with the following keys: 'NmF2', 'hmF2', 'B0', and 'B1', shaped as [N_time, N_lat, N_lon].
@@ -152,6 +152,114 @@ PyVALION.plotting.plot_individual_mean_residuals(res_ion,
 
 ![Residuals](docs/figures/IonRes_hmF2.png)
 
+# Example Workflow for Jason TEC Validation
+
+
+1. Create the model output dictionary
+Record your model output into a dictionary called model with the following key: 'TEC' shaped as [N_time, N_lat, N_lon].
+
+N_time: number of time steps (e.g., 96 for 15-minute resolution)
+
+N_lat: number of geographic latitudes
+
+N_lon: number of geographic longitudes
+
+2. Define the units dictionary
+
+```
+units = {'TEC': 'TECU'}
+Ensure your model output is in these units.
+```
+
+3. Create the atime array
+This array should have N_time elements and must be a list of datetime objects that match the time dimension of your model dictionary. Example for 15-minute resolution:
+
+```
+dtime = datetime.datetime(year, month, day)
+atime = pd.to_datetime(np.arange(dtime,
+                                 dtime + datetime.timedelta(days=1),
+                                 datetime.timedelta(minutes=15)))
+```
+
+4. Define the latitude array alat
+This array must have N_lat elements and match the second dimension in the model dictionary.
+
+5. Define the longitude array alon
+This array must have N_lon elements and match the third dimension in the model dictionary.
+
+6. Download the jason_manifest.txt file (provided by PyVALION) and save locally into data_save_dir. A local copy of the manifest will be updated with new THREDDs file location data if available.
+
+data_save_dir: path to save downloaded data
+
+7. Download all raw Jason TEC data for the validation time. If you need to exclude certain satellites, modify the sat_names array.
+
+```
+sat_names = np.array(["JA2", "JA3"])
+raw_data = PyVALION.library.download_Jason_TEC(atime[0],
+                                               atime[-1],
+                                               data_save_dir,
+                                               name_run=name_run,
+                                               save_data_option=True,
+                                               sat_names=sat_names)
+```
+
+data_save_dir: path to save downloaded data
+
+name_run: your chosen name for this run
+
+8. Downsample Jason TEC data to match model resolution.
+
+```
+data = PyVALION.library.downsample_Jason_TEC(raw_data,
+                                             ddeg,
+                                             save_dir=data_save_dir,
+                                             name_run=name_run,
+                                             save_data_option=True)
+```
+
+9. Create a forward operator for the Jason TEC dataset using the given model grid.
+
+```
+obs_data, obs_units, G = PyVALION.library.find_Jason_G_and_y(atime,
+                                                             alon,
+                                                             alat,
+                                                             data)
+```
+
+10. Compute residuals
+
+```
+model_data, residuals, model_units = PyVALION.library.find_Jason_residuals(model,
+                                                                           G,
+                                                                           obs_data,
+                                                                           units)
+```
+
+11. Plot results
+# Map of residuals
+```
+PyVALION.plotting.plot_TEC_residuals_map(obs_data['lat'],
+                                         obs_data['lon'],
+                                         residuals,
+                                         atime[0],
+                                         save_option=True,
+                                         save_dir=save_img_dir,
+                                         plot_name='TEC_Residuals_Map')
+```
+![Ionosondes_Map](docs/figures/TEC_Residuals_Map.png)
+
+# Histogram of residuals
+```
+PyVALION.plotting.plot_TEC_residuals_histogram(residuals,
+                                               model_units,
+                                               atime[0],
+                                               save_option=True,
+                                               save_dir=save_img_dir,
+                                               plot_name='TEC_Residuals')
+```
+
+![Residuals](docs/figures/TEC_Residuals.png)
+
 # Learn More
 
-See the [tutorials](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/tutorials) folder for an example that validates NmF2 and hmF2 from [PyIRI](https://github.com/victoriyaforsythe/PyIRI).
+See the [tutorials](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/tutorials) folder for examples that validate NmF2, hmF2, and TEC from [PyIRI](https://github.com/victoriyaforsythe/PyIRI).
