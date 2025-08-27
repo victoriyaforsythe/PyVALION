@@ -95,32 +95,32 @@ def test_freq2den_negative_input():
 # Test core for Jason TEC code
 def test_extract_first_date_valid():
     """Test extract_first_date valid."""
-    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
-           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    url = ("https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc")
     expected = datetime.datetime(2008, 7, 4, 23, 45, 13)
     assert extract_first_date(url) == expected
 
 
 def test_extract_first_date_invalid():
     """Test extract_first_date invalid."""
-    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
-           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    url = ("https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc")
     expected = datetime.datetime.max
     assert extract_first_date(url) == expected
 
 
 def test_extract_cycle_number_valid():
     """Test extract_cycle_number valid."""
-    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
-           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    url = ("https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc")
     expected = 0
     assert extract_cycle_number(url) == expected
 
 
 def test_extract_cycle_number_missing():
     """Test extract_cycle_number missing."""
-    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
-           + "cycleINV/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    url = ("https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycleINV/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc")
     expected = -1
     assert extract_cycle_number(url) == expected
 
@@ -163,7 +163,18 @@ def test_concat_data_dicts_dtype_mismatch():
     B = {"TEC": np.array([1], dtype=int)}
     try:
         concat_data_dicts(A, B)
-        assert False, "Expected ValueError for mismatched types"
+        assert False, "Expected TypeError for mismatched types"
+    except TypeError:
+        pass  # expected
+
+
+def test_concat_data_dicts_value_error():
+    """Test concat_data_dicts value error."""
+    A = {"x": np.array([1, 2, 3])}
+    B = {"x": [4, 5, 6]}  # not a numpy array
+    try:
+        concat_data_dicts(A, B)
+        assert False, "Expected ValueError because not a numpy array"
     except ValueError:
         pass  # expected
 
