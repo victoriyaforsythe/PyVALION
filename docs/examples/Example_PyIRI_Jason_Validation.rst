@@ -198,7 +198,7 @@ grid.
                                                    plot_name='TEC_Residuals')
 
 .. image:: /docs/figures/TEC_Residuals.png
-    :width: 600px
+    :width: 300px
     :align: center
     :alt: Residuals between Jason TEC observations and model forecast.
 
