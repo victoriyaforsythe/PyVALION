@@ -2,10 +2,13 @@
 # --------------------------------------------------------
 """Unit tests for PyVALION.library functions."""
 
+import datetime
 import numpy as np
 
 from PyVALION.library import freq2den
 from PyVALION.library import nearest_element
+from PyVALION.library import extract_first_date
+from PyVALION.library import extract_cycle_number
 
 
 def test_nearest_element_basic():
@@ -78,3 +81,32 @@ def test_freq2den_negative_input():
     freq = -2
     expected = 1.24e10 * freq**2  # Should still return positive density
     assert freq2den(freq) == expected
+
+
+# Test core for Jason TEC code
+def test_extract_first_date_valid():
+    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    expected = datetime.datetime(2008, 7, 4, 23, 45, 13)
+    assert extract_first_date(url) == expected
+
+
+def test_extract_first_date_invalid():
+    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    expected = datetime.datetime.max
+    assert extract_first_date(url) == expected
+
+
+def test_extract_cycle_number_valid():
+    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    expected = 0
+    assert extract_cycle_number(url) == expected
+
+
+def test_extract_cycle_number_missing():
+    url = ["https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
+           + "cycleINV/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc"]
+    expected = -1
+    assert extract_cycle_number(url) == expected

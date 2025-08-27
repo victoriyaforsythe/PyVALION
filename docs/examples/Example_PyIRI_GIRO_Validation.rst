@@ -1,5 +1,5 @@
-Example 1: PyIRI Validation using PyVALION
-==========================================
+Example 1: PyIRI Validation using PyVALION GIRO Data
+====================================================
 
 PyIRTAM can calculate daily ionospheric parameters for the user provided
 IRTAM coefficients and grid. The estimation of the parameters occurs
