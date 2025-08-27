@@ -5,19 +5,19 @@
 import datetime
 import numpy as np
 
-from PyVALION.library import freq2den
-from PyVALION.library import nearest_element
-from PyVALION.library import extract_first_date
-from PyVALION.library import extract_cycle_number
-from PyVALION.library import compute_jason_tec
-from PyVALION.library import make_empty_dict_data_jason
-from PyVALION.library import concat_data_dicts
-from PyVALION.library import compute_lanczos_kernel
-from PyVALION.library import lanczos_filter
-from PyVALION.library import robust_iterative_filter
 from PyVALION.library import apply_median_filter
-from PyVALION.library import round_and_stringify
+from PyVALION.library import compute_jason_tec
+from PyVALION.library import compute_lanczos_kernel
+from PyVALION.library import concat_data_dicts
 from PyVALION.library import downsample_dict
+from PyVALION.library import extract_cycle_number
+from PyVALION.library import extract_first_date
+from PyVALION.library import freq2den
+from PyVALION.library import lanczos_filter
+from PyVALION.library import make_empty_dict_data_jason
+from PyVALION.library import nearest_element
+from PyVALION.library import robust_iterative_filter
+from PyVALION.library import round_and_stringify
 
 
 def test_nearest_element_basic():
