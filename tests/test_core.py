@@ -104,7 +104,7 @@ def test_extract_first_date_valid():
 def test_extract_first_date_invalid():
     """Test extract_first_date invalid."""
     url = ("https://www.ncei.noaa.gov/thredds-ocean/dodsC/jason2/gdr/gdr/"
-           + "cycle000/JA2_GPN_2PdP000_074_20080704_234513_20080705_004126.nc")
+           + "cycle000/JA2_GPN_2PdP000_074.nc")
     expected = datetime.datetime.max
     assert extract_first_date(url) == expected
 
