@@ -110,11 +110,18 @@ raw_data = PyVALION.library.download_Jason_TEC(atime[0],
                                                save_data_option=True,
                                                sat_names=sat_names)
 
+# Downsample Jason TEC data to match model resolution
+data = PyVALION.library.downsample_Jason_TEC(raw_data,
+                                             ddeg,
+                                             save_dir=data_save_dir,
+                                             name_run=name_run,
+                                             save_data_option=True)
+
 # Create a forward operator for the Jason TEC dataset using the given model
 obs_data, obs_units, G = PyVALION.library.find_Jason_G_and_y(atime,
                                                              alon,
                                                              alat,
-                                                             raw_data)
+                                                             data)
 
 # Find residuals between the observed data and model forecast
 model_data, residuals, model_units = PyVALION.library.find_Jason_residuals(
