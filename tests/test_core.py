@@ -94,12 +94,16 @@ def test_sza_data_space_mismatched_lengths():
         assert True
 
 
-def test_sza_data_space_known_result():
-    """Test sza_data_space with a known valid input."""
-    dtime = np.array([pd.Timestamp("2023-11-07 21:00:00")])
-    alon = np.array([166.65])
-    alat = np.array([19.29])
+def test_sza_data_space_known_results():
+    """Test sza_data_space with known valid inputs."""
+    dtime = np.array([
+        pd.Timestamp("2023-11-07 21:00:00"),
+        pd.Timestamp("2023-11-07 21:15:00")
+    ])
+    alon = np.array([166.65, -83.56])
+    alat = np.array([19.29, 45.07])
     result = sza_data_space(dtime, alon, alat)
-    expected = 64.17772638205463
-    assert np.isclose(result[0], expected,
-                      atol=1e-6), f"Expected {expected}, got {result[0]}"
+
+    expected = np.array([64.17772638205463, 81.58068787800865])
+    assert np.allclose(result, expected, atol=1e-6), (
+        f"Expected {expected}, got {result}")
