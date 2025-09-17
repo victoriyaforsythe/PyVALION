@@ -99,4 +99,5 @@ def test_sza_data_space_known_result():
     alat = np.array([19.29])
     result = sza_data_space(dtime, alon, alat)
     expected = 64.17772638205463
-    assert np.isclose(result[0], expected, atol=1e-6), f"Expected {expected}, got {result[0]}"
+    assert np.isclose(result[0], expected,
+                      atol=1e-6), f"Expected {expected}, got {result[0]}"
