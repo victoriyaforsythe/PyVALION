@@ -706,7 +706,9 @@ def sza_data_space(dtime, alon, alat):
     -------
     np.ndarray
         Array of solar zenith angles in degrees.
+  
     """
+
     # Type checks
     for var_name, var in zip(['dtime', 'alon', 'alat'], [dtime, alon, alat]):
         if not isinstance(var, np.ndarray):
