@@ -690,8 +690,7 @@ def find_residuals(model, G, obs_data, obs_info, units):
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 def sza_data_space(dtime, alon, alat):
-    """
-    Compute solar zenith angles for a sequence of times and locations.
+    """Compute solar zenith angles for a sequence of times and locations.
 
     Parameters
     ----------
@@ -706,7 +705,7 @@ def sza_data_space(dtime, alon, alat):
     -------
     np.ndarray
         Array of solar zenith angles in degrees.
-  
+
     """
 
     # Type checks
