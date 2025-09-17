@@ -16,6 +16,7 @@ import subprocess
 import numpy as np
 import pandas as pd
 
+import PyIRI
 import PyVALION
 from PyVALION import logger
 
@@ -684,3 +685,53 @@ def find_residuals(model, G, obs_data, obs_info, units):
             res_ion[key][i] = np.nanmean(residuals[key][a])
 
     return model_data, residuals, model_units, res_ion
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def sza_data_space(dtime, alon, alat):
+    """
+    Compute solar zenith angles for a sequence of times and locations.
+
+    Parameters
+    ----------
+    dtime : np.ndarray
+        Array of datetime objects.
+    alon : np.ndarray
+        Array of longitudes (degrees East).
+    alat : np.ndarray
+        Array of latitudes (degrees North).
+
+    Returns
+    -------
+    np.ndarray
+        Array of solar zenith angles in degrees.
+    """
+    # Type checks
+    for var_name, var in zip(['dtime', 'alon', 'alat'], [dtime, alon, alat]):
+        if not isinstance(var, np.ndarray):
+            logger.error(
+                f"Input '{var_name}' must be a NumPy array, "
+                f"got {type(var).__name__} instead."
+            )
+            raise TypeError(f"Input '{var_name}' must be a NumPy array.")
+
+    # Shape check
+    if not (len(dtime) == len(alon) == len(alat)):
+        logger.error(
+            "Input arrays must be the same length: "
+            f"dtime={len(dtime)}, alon={len(alon)}, alat={len(alat)}"
+        )
+        raise ValueError("Input arrays must have the same length.")
+
+    # Convert to datetime and initialize result
+    dtime = pd.to_datetime(dtime)
+    solzen = np.zeros(len(dtime))
+
+    # Compute solar zenith angle for each entry
+    for i, time in enumerate(dtime):
+        jday = PyIRI.main_library.juldat(time)
+        slon, slat = PyIRI.main_library.subsolar_point(jday)
+        solzen[i] = PyIRI.main_library.solar_zenith(slon, slat,
+                                                    alon[i], alat[i])
+    return solzen
