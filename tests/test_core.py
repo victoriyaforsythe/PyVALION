@@ -78,3 +78,25 @@ def test_freq2den_negative_input():
     freq = -2
     expected = 1.24e10 * freq**2  # Should still return positive density
     assert freq2den(freq) == expected
+
+
+def test_sza_data_space_mismatched_lengths():
+    """Test sza_data_space with mismatched input lengths."""
+    dtime = np.array([pd.Timestamp("2025-01-01 00:00")])
+    alon = np.array([0, 10])
+    alat = np.array([45, 55])
+    try:
+        sza_data_space(dtime, alon, alat)
+        assert False, "Expected ValueError due to mismatched input lengths"
+    except ValueError:
+        assert True
+
+
+def test_sza_data_space_known_result():
+    """Test sza_data_space with a known valid input."""
+    dtime = np.array([pd.Timestamp("2023-11-07 21:00:00")])
+    alon = np.array([166.65])
+    alat = np.array([19.29])
+    result = sza_data_space(dtime, alon, alat)
+    expected = 64.17772638205463
+    assert np.isclose(result[0], expected, atol=1e-6), f"Expected {expected}, got {result[0]}"
