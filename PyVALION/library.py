@@ -727,8 +727,8 @@ alat = np.asarray(alat)
     solzen = np.zeros(len(dtime))
 
     # Compute solar zenith angle for each entry
-    for i, time in enumerate(dtime):
-        jday = PyIRI.main_library.juldat(time)
+    for i, tval in enumerate(dtime):
+        jday = PyIRI.main_library.juldat(tval)
         slon, slat = PyIRI.main_library.subsolar_point(jday)
         solzen[i] = PyIRI.main_library.solar_zenith(slon, slat,
                                                     alon[i], alat[i])
