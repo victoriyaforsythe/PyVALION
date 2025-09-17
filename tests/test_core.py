@@ -7,6 +7,7 @@ import pandas as pd
 
 from PyVALION.library import freq2den
 from PyVALION.library import nearest_element
+from PyVALION.library import sza_data_space
 
 
 def test_nearest_element_basic():
