@@ -709,13 +709,9 @@ def sza_data_space(dtime, alon, alat):
     """
 
     # Type checks
-    for var_name, var in zip(['dtime', 'alon', 'alat'], [dtime, alon, alat]):
-        if not isinstance(var, np.ndarray):
-            logger.error(
-                f"Input '{var_name}' must be a NumPy array, "
-                f"got {type(var).__name__} instead."
-            )
-            raise TypeError(f"Input '{var_name}' must be a NumPy array.")
+dtime = np.asarray(dtime)
+alon = np.asarray(alon)
+alat = np.asarray(alat)
 
     # Shape check
     if not (len(dtime) == len(alon) == len(alat)):
