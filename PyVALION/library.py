@@ -706,6 +706,11 @@ def sza_data_space(dtime, alon, alat):
     solzen : np.ndarray
         Array of solar zenith angles in degrees.
 
+    Raises
+    -------
+    ValueError
+        If input arrays have different shapes
+
     """
 
     # Type checks
