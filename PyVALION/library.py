@@ -714,7 +714,7 @@ alon = np.asarray(alon)
 alat = np.asarray(alat)
 
     # Shape check
-    if not (len(dtime) == len(alon) == len(alat)):
+    if not (dtime.shape == alon.shape == alat.shape):
         raise ValueError("Input arrays must have the same length.")
 
     # Convert to datetime and initialize result
