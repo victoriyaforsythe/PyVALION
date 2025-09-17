@@ -724,7 +724,7 @@ alat = np.asarray(alat)
 
     # Convert to datetime and initialize result
     dtime = pd.to_datetime(dtime)
-    solzen = np.zeros(len(dtime))
+    solzen = np.zeros(shape=dtime.shape)
 
     # Compute solar zenith angle for each entry
     for i, tval in enumerate(dtime):
