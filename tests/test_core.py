@@ -3,6 +3,7 @@
 """Unit tests for PyVALION.library functions."""
 
 import numpy as np
+import pandas as pd
 
 from PyVALION.library import freq2den
 from PyVALION.library import nearest_element
