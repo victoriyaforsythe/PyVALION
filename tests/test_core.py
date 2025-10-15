@@ -4,17 +4,23 @@
 
 import datetime
 import numpy as np
+import pandas as pd
 
 from PyVALION.library import apply_median_filter
 from PyVALION.library import compute_jason_tec
 from PyVALION.library import compute_lanczos_kernel
+from PyVALION.library import compute_solzen
 from PyVALION.library import concat_data_dicts
 from PyVALION.library import downsample_dict
 from PyVALION.library import extract_cycle_number
 from PyVALION.library import extract_first_date
+from PyVALION.library import fill_small_gaps
+from PyVALION.library import find_Jason_G_and_y
+from PyVALION.library import find_Jason_residuals
 from PyVALION.library import freq2den
 from PyVALION.library import lanczos_filter
 from PyVALION.library import make_empty_dict_data_jason
+from PyVALION.library import mask_dict
 from PyVALION.library import nearest_element
 from PyVALION.library import robust_iterative_filter
 from PyVALION.library import round_and_stringify
@@ -216,8 +222,69 @@ def test_round_and_stringify():
     assert np.allclose(lat_r % 0.5, 0)
 
 
+def test_mask_dict():
+    """Test mask_dict filters dict by boolean mask."""
+    d = {"x": np.array([1, 2, 3]), "y": np.array([10, 20, 30])}
+    mask = np.array([True, False, True])
+    out = mask_dict(d, mask)
+    assert np.all(out["x"] == np.array([1, 3]))
+    assert np.all(out["y"] == np.array([10, 30]))
+
+
 def test_downsample_dict():
     """Test downsample_dict success."""
     d = {"a": np.arange(10), "b": np.arange(10)}
     res = downsample_dict(d, 3)
     assert (res["a"] == [0, 3, 6, 9]).all()
+
+
+def test_fill_small_gaps():
+    """Test fill_small_gaps fills NaN gaps."""
+    data = np.array([1.0, np.nan, 3.0])
+    result = fill_small_gaps(data, 1)
+    assert np.isfinite(result[1])
+    assert result[0] == 1.0
+    assert result[-1] == 3.0
+
+
+def test_find_Jason_G_and_y_basic():
+    """Test find_Jason_G_and_y builds G and y."""
+    adtime = np.array([datetime.datetime(2020, 1, 1, 0, 0),
+                       datetime.datetime(2020, 1, 1, 1, 0)])
+    alon = np.array([0.0, 10.0])
+    alat = np.array([0.0, 10.0])
+    data = {
+        "dtime": np.array([datetime.datetime(2020, 1, 1, 0, 30)]),
+        "lat": np.array([5.0]),
+        "lon": np.array([5.0]),
+        "TEC": np.array([10.0]),
+        "name": np.array(["JA2"])
+    }
+    y, units, G = find_Jason_G_and_y(adtime, alon, alat, data)
+    assert "TEC" in y
+    assert "TEC" in units
+    assert G.ndim == 4
+
+
+def test_find_Jason_residuals():
+    """Test find_Jason_residuals computes residuals."""
+    model = {"TEC": np.ones((1, 2, 2))}
+    G = np.zeros((3, 1, 2, 2))
+    obs_data = {"TEC": np.array([1.0, 2.0, 3.0])}
+    units = {"TEC": "TECU"}
+    _, residuals, model_units = find_Jason_residuals(model, G, obs_data, units)
+    assert isinstance(residuals["TEC"], np.ndarray)
+    assert model_units["TEC"] == "TECU"
+
+
+def test_compute_solzen_single_day():
+    """Test compute_solzen outputs valid solar zenith angles."""
+    time_start = datetime.datetime(2020, 1, 1)
+    adtime = np.array([datetime.datetime(2020, 1, 1, 0, 0),
+                       datetime.datetime(2020, 1, 1, 12, 0)])
+    adtime = pd.to_datetime(adtime)
+    alon = np.array([0.0, 10.0])
+    alat = np.array([0.0, 10.0])
+    solzen = compute_solzen(time_start, 90, adtime, alon, alat)
+    assert solzen.shape == (len(adtime),)
+    assert np.all(np.isfinite(solzen))
