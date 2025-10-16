@@ -2097,6 +2097,7 @@ def compute_solzen(time_start, ddeg, adtime, alon, alat):
         i_lon = PyVALION.library.nearest_element(alon_grid, alon[it])
         solzen[it] = solzen_grid[it, i_lat, i_lon]
 
+
 def sza_data_space(dtime, alon, alat):
     """Compute solar zenith angles for a sequence of times and locations.
 
