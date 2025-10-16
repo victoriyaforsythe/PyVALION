@@ -9,7 +9,6 @@ import pandas as pd
 from PyVALION.library import apply_median_filter
 from PyVALION.library import compute_jason_tec
 from PyVALION.library import compute_lanczos_kernel
-from PyVALION.library import compute_solzen
 from PyVALION.library import concat_data_dicts
 from PyVALION.library import downsample_dict
 from PyVALION.library import extract_cycle_number
