@@ -289,6 +289,8 @@ def test_compute_solzen_single_day():
     solzen = compute_solzen(time_start, 90, adtime, alon, alat)
     assert solzen.shape == (len(adtime),)
     assert np.all(np.isfinite(solzen))
+
+
 def test_sza_data_space_mismatched_lengths():
     """Test sza_data_space with mismatched input lengths."""
     dtime = np.array([pd.Timestamp("2025-01-01 00:00")])
