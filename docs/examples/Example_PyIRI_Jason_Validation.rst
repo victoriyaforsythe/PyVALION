@@ -96,14 +96,14 @@ https://omniweb.gsfc.nasa.gov/form/dx1.html
                                                                  PyIRI.coeff_dir,
                                                                  ccir_or_ursi=1)
 
-8. Compute TEC from PyIRI electron density outputs.
+8. Compute TEC from PyIRI electron density outputs up to the altitude of Jason satellites (1336 km).
 
 ::
 
     TEC_IRI = PyIRI.main_library.edp_to_vtec(den,
                                              aalt,
                                              min_alt=0.0,
-                                             max_alt=202000.0)
+                                             max_alt=1336.0)
 
 9. Record the model outputs into a dictionary. When using your own model, match
 the format to this dictionary. Ensure that TEC is in (TECU).

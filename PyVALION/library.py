@@ -25,7 +25,6 @@ import PyVALION
 from PyVALION import logger
 
 from PyIRI.main_library import adjust_longitude as adjust_lon
-from PyIRI.main_library import solzen_timearray_grid
 
 
 # -----------------------------------------------------------------------------
@@ -2031,73 +2030,6 @@ def find_Jason_residuals(model, G, obs_data, units):
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def compute_solzen(time_start, ddeg, adtime, alon, alat):
-    """Compute the solar zenith angle (SZA) for given times and locations.
-
-    Parameters
-    ----------
-    time_start : datetime.datetime
-        Single datetime specifying mean date for SZA function.
-    adtime : datetime.datetime
-        Array of time points with length N_time, used for calculating aUT.
-    alon : array-like (float)
-        Flattened array of longitudes in degrees with length N_loc.
-    alat : array-like (float)
-        Flattened array of latitudes in degrees with length N_loc.
-
-    Returns
-    -------
-    solzen : array-like
-        Solar zenith angle with shape [N_time, N_loc].
-
-    Raises
-    ------
-    ValueError
-        If the input arrays are not the same shape.
-    OR
-        If more than one day of data is inputted.
-    """
-
-    # Extract time info from datetime
-    year_unq = np.unique(time_start.year)
-    month_unq = np.unique(time_start.month)
-    day_unq = np.unique(time_start.day)
-    # Check that only a single day has been inputted
-    if ((year_unq.size == 1) & (month_unq.size == 1) & (day_unq.size == 1)):
-        year = int(year_unq[0])
-        month = int(month_unq[0])
-        day = int(day_unq[0])
-        aUT = adtime.hour + adtime.minute / 60. + adtime.second / 3600.
-    else:
-        raise ValueError('More than one day of data inputted as time_start.')
-
-    # Fill in a grid of solzen time array
-    alon_grid = np.arange(-180, 180 + ddeg, ddeg)
-    alat_grid = np.arange(-90, 90 + ddeg, ddeg)
-    alon_grid_2d, alat_grid_2d = np.meshgrid(alon_grid, alat_grid)
-    alon_grid_1d = np.reshape(alon_grid_2d, alon_grid_2d.size)
-    alat_grid_1d = np.reshape(alat_grid_2d, alat_grid_2d.size)
-
-    # Compute solar zenith angle
-    solzen_grid, _, _ = solzen_timearray_grid(year, month, day, aUT,
-                                              alon_grid_1d,
-                                              alat_grid_1d)
-
-    # check size of the grid arrays
-    if alon.size != alat.size:
-        raise ValueError('`alon` and `alat` sizes are  not the same')
-
-    solzen_grid = np.reshape(solzen_grid,
-                             (len(aUT), len(alat_grid), len(alon_grid)))
-
-    # Find nearest elements
-    solzen = np.full_like(aUT, np.nan)
-    for it in range(len(aUT)):
-        i_lat = PyVALION.library.nearest_element(alat_grid, alat[it])
-        i_lon = PyVALION.library.nearest_element(alon_grid, alon[it])
-        solzen[it] = solzen_grid[it, i_lat, i_lon]
-
-
 def sza_data_space(dtime, alon, alat):
     """Compute solar zenith angles for a sequence of times and locations.
 

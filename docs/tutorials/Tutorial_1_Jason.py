@@ -23,10 +23,10 @@ import PyVALION
 
 # Folder where the downloaded Jason TEC data will be saved
 # This folder should also hold a local copy of jason_manifest.txt
-data_save_dir = '/Users/mevans/Downloads/Jason_Data/'
+data_save_dir = '/Users/madel/Downloads/Jason_Data/'
 
 # Folder where the residual images will be saved
-save_img_dir = '/Users/mevans/Downloads/Jason_Images/'
+save_img_dir = '/Users/madel/Downloads/Jason_Images/'
 
 # Name of the validation run
 name_run = 'PyIRI_Validation'
@@ -81,11 +81,11 @@ _, _, _, _, _, _, den = PyIRI.main_library.IRI_density_1day(dtime.year,
                                                             PyIRI.coeff_dir,
                                                             ccir_or_ursi=1)
 
-# Compute TEC from PyIRI data
+# Compute TEC from PyIRI data up to Jason satellite altitude (1336 km)
 TEC_IRI = PyIRI.main_library.edp_to_vtec(den,
                                          aalt,
                                          min_alt=0.0,
-                                         max_alt=202000.0)
+                                         max_alt=1336.0)
 
 # Record the model outputs into a dictionary
 # When using your own model, match the format to this dictionary
@@ -95,10 +95,6 @@ model['TEC'] = np.reshape(TEC_IRI, (N_time, N_lat, N_lon))
 # A dictionary to hold the units of the model outputs
 units = {}
 units['TEC'] = 'TECU'
-
-# Open the list of GIRO ionosondes (provided by the PyVALION module)
-file_ion_name = os.path.join(PyVALION.giro_names_dir, 'GIRO_Ionosondes.p')
-giro_name = pickle.load(open(file_ion_name, 'rb'))
 
 # Download all raw Jason TEC data for the validation time
 # If you need to exclude certain satellites, modify the sat_names array

@@ -278,19 +278,6 @@ def test_find_Jason_residuals():
     assert model_units["TEC"] == "TECU"
 
 
-def test_compute_solzen_single_day():
-    """Test compute_solzen outputs valid solar zenith angles."""
-    time_start = datetime.datetime(2020, 1, 1)
-    adtime = np.array([datetime.datetime(2020, 1, 1, 0, 0),
-                       datetime.datetime(2020, 1, 1, 12, 0)])
-    adtime = pd.to_datetime(adtime)
-    alon = np.array([0.0, 10.0])
-    alat = np.array([0.0, 10.0])
-    solzen = compute_solzen(time_start, 90, adtime, alon, alat)
-    assert solzen.shape == (len(adtime),)
-    assert np.all(np.isfinite(solzen))
-
-
 def test_sza_data_space_mismatched_lengths():
     """Test sza_data_space with mismatched input lengths."""
     dtime = np.array([pd.Timestamp("2025-01-01 00:00")])

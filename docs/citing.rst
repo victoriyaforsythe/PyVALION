@@ -14,7 +14,8 @@ The most recent citation can be found at `Zenodo <https://zenodo.org/>`_.
 
   @software{PyIRI,
     author       = {Forsythe, V. and
-                    Burrell, A.G.},
+                    Burrell, A.G. and
+                    Evans, M.C.},
     title        = {victoriyaforsythe/PyVALION},
     year         = 2025,
     publisher    = {Zenodo},
