@@ -10,6 +10,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 * Implemented logging in plot functions
 * Implemented `with` statements for all file openings
 * Removed logic needed in `__init__.py` for older Python versions
+* Added SZA function to use for day-night separation in obs space
 
 ## 0.0.1 (05-05-2025)
 * Alpha release

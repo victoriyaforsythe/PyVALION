@@ -24,6 +24,7 @@ from PyVALION.library import mask_dict
 from PyVALION.library import nearest_element
 from PyVALION.library import robust_iterative_filter
 from PyVALION.library import round_and_stringify
+from PyVALION.library import sza_data_space
 
 
 def test_nearest_element_basic():
@@ -288,3 +289,27 @@ def test_compute_solzen_single_day():
     solzen = compute_solzen(time_start, 90, adtime, alon, alat)
     assert solzen.shape == (len(adtime),)
     assert np.all(np.isfinite(solzen))
+def test_sza_data_space_mismatched_lengths():
+    """Test sza_data_space with mismatched input lengths."""
+    dtime = np.array([pd.Timestamp("2025-01-01 00:00")])
+    alon = np.array([0, 10])
+    alat = np.array([45, 55])
+    try:
+        sza_data_space(dtime, alon, alat)
+        assert False, "Expected ValueError due to mismatched input lengths"
+    except ValueError:
+        assert True
+
+
+def test_sza_data_space_known_results():
+    """Test sza_data_space with known valid inputs."""
+    dtime = np.reshape(np.array([datetime.datetime(2023, 11, 7, 21, 0, 0),
+                                 datetime.datetime(2023, 11, 7, 21, 15, 0)]),
+                       (1, 2))
+    alon = np.reshape(np.array([166.65, -83.56]), (1, 2))
+    alat = np.reshape(np.array([19.29, 45.07]), (1, 2))
+    result = sza_data_space(dtime, alon, alat)
+
+    expected = np.array([[64.17772638, 81.58068788]])
+    assert np.allclose(result, expected, atol=1e-6), (
+        f"Expected {expected}, got {result}")

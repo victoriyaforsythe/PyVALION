@@ -20,6 +20,7 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 
+import PyIRI
 import PyVALION
 from PyVALION import logger
 
@@ -2096,4 +2097,62 @@ def compute_solzen(time_start, ddeg, adtime, alon, alat):
         i_lon = PyVALION.library.nearest_element(alon_grid, alon[it])
         solzen[it] = solzen_grid[it, i_lat, i_lon]
 
+def sza_data_space(dtime, alon, alat):
+    """Compute solar zenith angles for a sequence of times and locations.
+
+    Parameters
+    ----------
+    dtime : np.ndarray
+        Array of datetime objects.
+    alon : np.ndarray
+        Array of longitudes (degrees East).
+    alat : np.ndarray
+        Array of latitudes (degrees North).
+
+    Returns
+    -------
+    solzen : np.ndarray
+        Array of solar zenith angles in degrees.
+
+    Raises
+    -------
+    ValueError
+        If input arrays have different shapes
+
+    """
+
+    # Make sure they are Numpy arrays
+    alon = np.asarray(alon)
+    alat = np.asarray(alat)
+    dtime = np.asarray(dtime)
+
+    # Shape check
+    if not (dtime.shape == alon.shape == alat.shape):
+        raise ValueError("Input arrays must have the same shape.")
+
+    # pd.to_datetime requires 1-D arrays, therefore we need to flatten them
+    # and record the initial shape to reshape back the result
+    initial_shape = dtime.shape
+
+    alon = np.reshape(alon, alon.size)
+    alat = np.reshape(alat, alat.size)
+    dtime = np.reshape(dtime, dtime.size)
+
+    # Once the arrays are flat make sure dtime array acts as dtime object
+    dtime = pd.to_datetime(dtime)
+
+    # Initialize result
+    solzen = np.zeros(shape=dtime.shape)
+
+    # Compute solar zenith angle for each entry
+    for i in range(0, dtime.size):
+        jday = PyIRI.main_library.juldat(dtime[i])
+        slon, slat = PyIRI.main_library.subsolar_point(jday)
+        solzen[i] = PyIRI.main_library.solar_zenith(slon,
+                                                    slat,
+                                                    alon[i],
+                                                    alat[i])
+
+    # Reform the result to the original shape
+    solzen = np.reshape(solzen, initial_shape)
     return solzen
