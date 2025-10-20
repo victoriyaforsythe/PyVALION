@@ -229,8 +229,8 @@ def plot_TEC_residuals_map(alat,
     fig, ax_plot = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(9, 3),
                            constrained_layout=True,
                            subplot_kw={'projection': projection1})
-    plt.xlim([-180, 180])
-    plt.ylim([-90, 90])
+    ax_plot.set_xlim([-180, 180])
+    ax_plot.set_ylim([-90, 90])
     ax_plot.set_xticks(np.arange(-180, 180 + 45, 90), crs=ccrs.PlateCarree())
     ax_plot.set_yticks(np.arange(-90, 90 + 45, 45), crs=ccrs.PlateCarree())
     ax_plot.set_xlabel('Geo Lon (°)')
