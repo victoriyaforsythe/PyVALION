@@ -1752,7 +1752,7 @@ def downsample_Jason_TEC(data_all,
 
     Returns
     -------
-    dict
+    data_resamp : dict
         Dictionary of Jason data with downsampled fields.
     """
 
