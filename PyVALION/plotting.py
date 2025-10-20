@@ -231,7 +231,6 @@ def plot_TEC_residuals_map(alat,
                            subplot_kw={'projection': projection1})
     plt.xlim([-180, 180])
     plt.ylim([-90, 90])
-    ax_plot = ax
     ax_plot.set_xticks(np.arange(-180, 180 + 45, 90), crs=ccrs.PlateCarree())
     ax_plot.set_yticks(np.arange(-90, 90 + 45, 45), crs=ccrs.PlateCarree())
     ax_plot.set_xlabel('Geo Lon (°)')
