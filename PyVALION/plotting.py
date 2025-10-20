@@ -226,7 +226,7 @@ def plot_TEC_residuals_map(alat,
     """
 
     projection1 = ccrs.PlateCarree()
-    fig, ax = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(9, 3),
+    fig, ax_plot = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(9, 3),
                            constrained_layout=True,
                            subplot_kw={'projection': projection1})
     plt.xlim([-180, 180])
