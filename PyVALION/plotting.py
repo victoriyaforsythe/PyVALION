@@ -10,7 +10,7 @@ import os
 
 import cartopy.crs as ccrs
 import cartopy.mpl.ticker as cticker
-import matplotlib.colors as colors
+from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np
 
