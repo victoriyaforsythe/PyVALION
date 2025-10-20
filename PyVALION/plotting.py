@@ -258,7 +258,7 @@ def plot_TEC_residuals_map(alat,
         # Save figure
         figname = os.path.join(save_dir, plot_name + '.pdf')
         plt.savefig(figname, bbox_inches='tight', facecolor='white')
-        print('Figure Residual Map is saved at: ', figname)
+        logger.info('Figure Residual Map is saved at: ', figname)
     return
 
 
@@ -318,6 +318,6 @@ def plot_TEC_residuals_histogram(residuals,
         # Save figure
         figname = os.path.join(save_dir, plot_name + '.pdf')
         plt.savefig(figname, bbox_inches='tight', facecolor='white')
-        print('Figure Residuals is saved at: ', figname)
+        logger.info('Figure Residuals is saved at: ', figname)
 
     return

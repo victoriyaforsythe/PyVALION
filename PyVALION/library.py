@@ -741,7 +741,8 @@ def download_Jason_TEC(time_start,
 
     # Loop and read through all matching urls
     # for row in matching_urls:
-    print(f"\nProcessing Jason TEC data from {len(matching_urls)} files.")
+    PyVALION.logger.info(f"\nProcessing Jason TEC data from"
+                         f" {len(matching_urls)} files.")
     for row in tqdm(matching_urls, desc="Jason file progress",
                     unit="file"):
         url = row[0]
@@ -770,7 +771,8 @@ def download_Jason_TEC(time_start,
         # Jason raw data filename
         file_str_raw = ('Jason_TEC_raw_' + name_run + '.p')
         file_path_raw = os.path.join(save_dir, file_str_raw)
-        print(f"Saving Raw Jason TEC data to: '{file_path_raw}'")
+        PyVALION.logger.info(f"Saving Raw Jason TEC data to: "
+                             f"'{file_path_raw}'")
         pickle.dump(data_all, open(file_path_raw, "wb"))
 
     return data_all
@@ -809,7 +811,8 @@ def create_manifest(output_file):
         Path to the manifest file to create.
     """
     # Print message to user
-    print(f"Creating Jason data file manifest as '{output_file}'.")
+    PyVALION.logger.info(f"Creating Jason data file manifest as "
+                         f"'{output_file}'.")
 
     # Jason-2 and Jason-3 catalog URLs (THREDDS):
     catalog_urls = [
@@ -821,11 +824,12 @@ def create_manifest(output_file):
         "catalog.xml"
     ]
 
-    print("Counting total cycle catalogs across all Jason-2 and Jason-3 "
-          "sources...")
+    PyVALION.logger.info("Counting total cycle catalogs across all Jason-2 "
+                         "and Jason-3 sources...")
     total_cycles = sum(count_cycle_subcatalogs(url) for url in
                        catalog_urls)
-    print(f"Total of {total_cycles} cycle catalogs will be scanned.")
+    PyVALION.logger.info(f"Total of {total_cycles} cycle catalogs will "
+                         "be scanned.")
 
     all_nc_urls = []
 
@@ -848,7 +852,8 @@ def create_manifest(output_file):
         for url in sorted_urls:
             f.write(url + "\n")
 
-    print(f"{len(sorted_urls)} unique .nc URLs saved to '{output_file}'")
+    PyVALION.logger.info(f"{len(sorted_urls)} unique .nc URLs saved "
+                         f"to '{output_file}'")
 
 
 # -----------------------------------------------------------------------------
@@ -866,14 +871,16 @@ def update_manifest(output_file):
         Path to the manifest file to update.
     """
     # Print message to user
-    print(f"File '{output_file}' already exists. Checking for updates.")
+    PyVALION.logger.info(f"File '{output_file}' already exists. "
+                         "Checking for updates.")
 
     # Load existing URLs
     with open(output_file, "r") as f:
         existing_urls = [line.strip() for line in f if line.strip()]
 
     if not existing_urls:
-        print("Jason file manifest is empty. Creating new manifest")
+        PyVALION.logger.info("Jason file manifest is empty. "
+                             "Creating new manifest")
         create_manifest(output_file)
         return
 
@@ -884,8 +891,8 @@ def update_manifest(output_file):
 
     # Check that the final file is not a Jason-2 entry
     if "JA2" in last_url:
-        print("WARNING: Last listed file is a Jason-2 entry. Rebuilding "
-              "manifest...")
+        PyVALION.logger.info("WARNING: Last listed file is a Jason-2 entry. "
+                             "Rebuilding manifest...")
         create_manifest(output_file)
         return
 
@@ -894,13 +901,14 @@ def update_manifest(output_file):
     threshold_str = "20191001_065045"
     threshold_dt = datetime.datetime.strptime(threshold_str, "%Y%m%d_%H%M%S")
     if last_timestamp < threshold_dt:
-        print(f"WARNING: Last listed file timestamp {last_timestamp} is older "
-              f"than end of Jason-2 record. Rebuilding manifest...")
+        PyVALION.logger.info(f"WARNING: Last listed file timestamp "
+                             f"{last_timestamp} is older than end of Jason-2"
+                             " record. Rebuilding manifest...")
         create_manifest(output_file)
         return
 
-    print(f"Last recorded data: cycle: {last_cycle}, "
-          f"timestamp: {last_timestamp}")
+    PyVALION.logger.info(f"Last recorded data: cycle: {last_cycle}, "
+                         f"timestamp: {last_timestamp}")
 
     # Jason-3 THREDDS catalog URLs
     catalog_urls = [
@@ -923,10 +931,10 @@ def update_manifest(output_file):
                     if cycle_num >= last_cycle:
                         all_cycles.append((cycle_num, ref.href))
         except Exception as e:
-            print(f"Failed to access {root_url}: {e}")
+            PyVALION.logger.info(f"Failed to access {root_url}: {e}")
 
-    print(f"{len(all_cycles)} total cycles will be scanned up to/including "
-          f"cycle {last_cycle})")
+    PyVALION.logger.info(f"{len(all_cycles)} total cycles will be scanned "
+                         f"up to/including cycle {last_cycle})")
 
     # Process each cycle with progress bar
     with tqdm(total=len(all_cycles), desc="Processing cycles") as progress:
@@ -955,9 +963,10 @@ def update_manifest(output_file):
         with open(output_file, "a") as f:
             for url in new_unique_urls:
                 f.write(url + "\n")
-        print(f"Added {len(new_unique_urls)} new entries to manifest.")
+        PyVALION.logger.info(f"Added {len(new_unique_urls)} new entries "
+                             "to manifest.")
     else:
-        print("No new files to add. Manifest is up to date.")
+        PyVALION.logger.info("No new files to add. Manifest is up to date.")
 
 
 # -----------------------------------------------------------------------------
@@ -1130,10 +1139,10 @@ def filter_urls_by_timerange(manifest_filepath,
     # Open and read the input file line by line
     with open(manifest_filepath, 'r') as file:
         # Print out progress statements to user
-        print(f"\nFiltering for overlap with user-specified time window:"
-              f"{user_start} to {user_finish}.")
+        PyVALION.logger.info(f"\nFiltering for overlap with user-specified "
+                             f"time window: {user_start} to {user_finish}.")
         lines = file.readlines()
-        print(f"Searching {len(lines)} URLs from manifest.")
+        PyVALION.logger.info(f"Searching {len(lines)} URLs from manifest.")
 
         for line in tqdm(lines, desc="Filtering URLs", unit="file"):
             url = line.strip()
@@ -1156,7 +1165,7 @@ def filter_urls_by_timerange(manifest_filepath,
                     matching_urls.append((url, start_dt, end_dt))
 
     # Return the list of matching URLs and their associated datetimes
-    print(f"Found {len(matching_urls)} matching files.")
+    PyVALION.logger.info(f"Found {len(matching_urls)} matching files.")
     return matching_urls
 
 
@@ -1772,8 +1781,8 @@ def downsample_Jason_TEC(data_all,
     N_1hr = len(lat_hr1)
     N_1hr_resamp = len(unq_ind)
     N_resamp = np.round(N_1hr / N_1hr_resamp).astype(int)
-    print('\nResampling Jason TEC data for ', f"{ddeg:.2f}",
-          ' degree resolution.')
+    PyVALION.logger.info(f"\nResampling Jason TEC data for {ddeg:.2f} "
+                         "degree resolution.")
 
     data_resamp = downsample_dict(data_all, N_resamp)
 
@@ -1783,10 +1792,11 @@ def downsample_Jason_TEC(data_all,
         file_str_resample = ('Jason_TEC_resampled_' + ddeg_str + 'res_'
                              + name_run + '.p')
         file_path_resample = os.path.join(save_dir, file_str_resample)
-        print(f"Saving Downsampled Jason TEC data to: '{file_path_resample}'")
+        PyVALION.logger.info("Saving Downsampled Jason TEC data "
+                             f"to: '{file_path_resample}'")
         pickle.dump(data_resamp, open(file_path_resample, "wb"))
 
-    print('\n')
+    PyVALION.logger.info('\n')
     return data_resamp
 
 
@@ -1959,7 +1969,8 @@ def find_Jason_G_and_y(adtime,
             G[i, i_t, i_lat, i_lon] = 1.
             i = i + 1
 
-    print('G has shape [N_obs, N_time, N_lat, N_lon] = ', G.shape)
+    PyVALION.logger.info('G has shape [N_obs, N_time, N_lat, N_lon] = ',
+                         G.shape)
 
     # Write observation vectors to the dictionary
     y = {'TEC': ay_tec, 'lon': ay_lon, 'lat': ay_lat,
@@ -2020,7 +2031,7 @@ def find_Jason_residuals(model, G, obs_data, units):
     # Loop through all parameters in the model dictionary to extract model data
     # at observation points
     for key in model:
-        print('key= ', key)
+        PyVALION.logger.info('key= ', key)
         model_data[key] = find_model_data(model[key], G)
         residuals[key] = obs_data[key] - model_data[key]
         model_units[key] = units[key]
