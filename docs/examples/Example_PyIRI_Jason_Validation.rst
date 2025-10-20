@@ -173,13 +173,13 @@ grid.
 
 ::
 
-    PyVALION.plotting.plot_TEC_residuals_map(obs_data['lat'],
-                                             obs_data['lon'],
-                                             residuals,
-                                             atime[0],
-                                             save_option=True,
-                                             save_dir=save_img_dir,
-                                             plot_name='TEC_Residuals_Map')
+    fig = PyVALION.plotting.plot_TEC_residuals_map(obs_data['lat'],
+                                                   obs_data['lon'],
+                                                   residuals,
+                                                   atime[0],
+                                                   save_option=True,
+                                                   save_dir=save_img_dir,
+                                                   plot_name='TEC_Residuals_Map')
 
 .. image:: /docs/figures/TEC_Residuals_Map.png
     :width: 600px
@@ -190,12 +190,12 @@ grid.
 
 ::
 
-    PyVALION.plotting.plot_TEC_residuals_histogram(residuals,
-                                                   model_units,
-                                                   atime[0],
-                                                   save_option=True,
-                                                   save_dir=save_img_dir,
-                                                   plot_name='TEC_Residuals')
+    fig = PyVALION.plotting.plot_TEC_residuals_histogram(residuals,
+                                                         model_units,
+                                                         atime[0],
+                                                         save_option=True,
+                                                         save_dir=save_img_dir,
+                                                         plot_name='TEC_Residuals')
 
 .. image:: /docs/figures/TEC_Residuals.png
     :width: 300px

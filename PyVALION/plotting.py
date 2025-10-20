@@ -227,8 +227,8 @@ def plot_TEC_residuals_map(alat,
 
     projection1 = ccrs.PlateCarree()
     fig, ax_plot = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(9, 3),
-                           constrained_layout=True,
-                           subplot_kw={'projection': projection1})
+                                constrained_layout=True,
+                                subplot_kw={'projection': projection1})
     ax_plot.set_xlim([-180, 180])
     ax_plot.set_ylim([-90, 90])
     ax_plot.set_xticks(np.arange(-180, 180 + 45, 90), crs=ccrs.PlateCarree())
@@ -258,7 +258,7 @@ def plot_TEC_residuals_map(alat,
         figname = os.path.join(save_dir, plot_name + '.pdf')
         plt.savefig(figname, bbox_inches='tight', facecolor='white')
         logger.info('Figure Residual Map is saved at: ', figname)
-    return
+    return fig
 
 
 # -----------------------------------------------------------------------------
@@ -286,7 +286,7 @@ def plot_TEC_residuals_histogram(residuals,
         (default='TEC_Residuals.pdf').
     """
 
-    fig, ax = plt.subplots(1, 1, sharex=False, sharey=False)
+    fig, ax_plot = plt.subplots(1, 1, sharex=False, sharey=False)
     if np.size(dtime) > 1:
         fig.suptitle('Residuals, ' + dtime[0].strftime('%Y%m%d') + ' - '
                      + dtime[-1].strftime('%Y%m%d'))
@@ -296,7 +296,6 @@ def plot_TEC_residuals_histogram(residuals,
     fig.set_size_inches(3, 3)
     keys_list = 'TEC'
 
-    ax_plot = ax
     ax_plot.set_facecolor('lightgray')
     ax_plot.set_xlabel(keys_list
                        + ' (' + model_units[keys_list] + ')')
@@ -319,4 +318,4 @@ def plot_TEC_residuals_histogram(residuals,
         plt.savefig(figname, bbox_inches='tight', facecolor='white')
         logger.info('Figure Residuals is saved at: ', figname)
 
-    return
+    return fig

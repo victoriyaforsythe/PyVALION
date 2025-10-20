@@ -122,18 +122,18 @@ model_data, residuals, model_units = PyVALION.library.find_Jason_residuals(
     model, G, obs_data, units)
 
 # Create a map showing the residuals between model and data observations
-PyVALION.plotting.plot_TEC_residuals_map(obs_data['lat'],
-                                         obs_data['lon'],
-                                         residuals,
-                                         atime[0],
-                                         save_option=True,
-                                         save_dir=save_img_dir,
-                                         plot_name='TEC_Residuals_Map')
-
-# Create a histogram of residuals between model data and observations
-PyVALION.plotting.plot_TEC_residuals_histogram(residuals,
-                                               model_units,
+fig = PyVALION.plotting.plot_TEC_residuals_map(obs_data['lat'],
+                                               obs_data['lon'],
+                                               residuals,
                                                atime[0],
                                                save_option=True,
                                                save_dir=save_img_dir,
-                                               plot_name='TEC_Residuals')
+                                               plot_name='TEC_Residuals_Map')
+
+# Create a histogram of residuals between model data and observations
+fig = PyVALION.plotting.plot_TEC_residuals_histogram(residuals,
+                                                     model_units,
+                                                     atime[0],
+                                                     save_option=True,
+                                                     save_dir=save_img_dir,
+                                                     plot_name='TEC_Residuals')
