@@ -1874,9 +1874,7 @@ def downsample_dict(data_raw, N):
         Dictionary with downsampled fields.
     """
 
-    data_resamp = {}
-    for key, data in data_raw.items():
-        data_resamp[key] = data[::N]
+    data_resamp = {key: data[::N] for key, data in data_raw.items()}
     return data_resamp
 
 
