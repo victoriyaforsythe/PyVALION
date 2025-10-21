@@ -1664,7 +1664,7 @@ def compute_jason_tec(iono_ku_delay):
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def concat_data_dicts(A, B):
+def concat_data_dicts(a_dict, b_dict):
     """Concatenate two dictionaries with the same field names.
 
     This function merges the contents of dictionaries A and B, assuming both
@@ -1672,32 +1672,33 @@ def concat_data_dicts(A, B):
 
     Parameters
     ----------
-    A : dict
+    a_dict : dict
         Dictionary with identical field names to B.
-    B : dict
+    b_dict : dict
         Dictionary with identical field names to A.
 
     Returns
     -------
-    C : dict
+    c_dict : dict
         Dictionary with all the data from A and B combined (A preceding B).
     """
-    C = {}
+    c_dict = {}
 
     for a_key in a_dict.keys():
-        a_val = A[k]
-        b_val = B[k]
+        a_val = a_dict[a_key]
+        b_val = b_dict[a_key]
 
         if isinstance(a_val, np.ndarray) and isinstance(b_val, np.ndarray):
             if a_val.dtype == b_val.dtype:
-                C[k] = np.concatenate([a_val, b_val])
+                c_dict[a_key] = np.concatenate([a_val, b_val])
             else:
-                raise TypeError(f"Field '{k}' dtype mismatch: {a_val.dtype} vs"
-                                f"{b_val.dtype}")
+                raise TypeError(f"Field '{a_key}' dtype mismatch: "
+                                f"{a_val.dtype} vs {b_val.dtype}")
         else:
-            raise ValueError(f"Field '{k}' is not a numpy array in both dicts")
+            raise ValueError(f"Field '{a_key}' is not a numpy "
+                             "array in both dicts")
 
-    return C
+    return c_dict
 
 
 # -----------------------------------------------------------------------------
