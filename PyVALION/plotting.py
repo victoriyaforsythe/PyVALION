@@ -223,6 +223,11 @@ def plot_TEC_residuals_map(alat,
     plot_name : str
         Output name, without directory, for the saved figure
         (default='TEC_Residuals_Map.pdf').
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Figure containing the residual map.
     """
 
     projection1 = ccrs.PlateCarree()
@@ -284,6 +289,11 @@ def plot_TEC_residuals_histogram(residuals,
     plot_name : str
         Output name, without directory, for the saved figure
         (default='TEC_Residuals.pdf').
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        Figure containing the residual histogram.
     """
 
     fig, ax_plot = plt.subplots(1, 1, sharex=False, sharey=False)

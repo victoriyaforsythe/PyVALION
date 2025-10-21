@@ -1903,7 +1903,7 @@ def find_Jason_G_and_y(adtime,
     Returns
     -------
     y : dict
-        Dictionary containing observation vectors with keys:
+        Dictionary containing the following keys and values:
         TEC : array-like
             Jason total electron content in TECU.
         lon : array-like
@@ -1994,7 +1994,7 @@ def find_Jason_residuals(model, G, obs_data, units):
     G : array-like
         Geometry matrix [N_obs, N_time, N_lat, N_lon].
     obs_data : dict
-        Dictionary that contains observation vectors:
+        Dictionary containing the following keys and values:
         TEC : array-like
             Array of Jason total electron content in TECU.
         lon : array-like
