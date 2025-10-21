@@ -1721,9 +1721,7 @@ def mask_dict(data_raw, mask):
         Dictionary with cleaned out fields.
     """
 
-    data_clean = {}
-    for key, data in data_raw.items():
-        data_clean[key] = data[mask]
+    data_clean = {key: data[mask] for key, data in data_raw.items()}
     return data_clean
 
 
