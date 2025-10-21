@@ -1684,7 +1684,7 @@ def concat_data_dicts(A, B):
     """
     C = {}
 
-    for k in A:
+    for a_key in a_dict.keys():
         a_val = A[k]
         b_val = B[k]
 
