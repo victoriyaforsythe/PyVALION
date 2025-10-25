@@ -40,7 +40,10 @@ dependencies = [
   "scipy",
   "cartopy",
   "pandas",
-  "PyIRI"
+  "PyIRI",
+  "netCDF4",
+  "siphon",
+  "tqdm"
 ]
 
 [project.optional-dependencies]
