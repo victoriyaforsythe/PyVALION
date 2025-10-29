@@ -12,14 +12,14 @@ The most recent citation can be found at `Zenodo <https://zenodo.org/>`_.
 
 .. code-block:: latex
 
-  @software{PyIRI,
+  @software{PyVALION,
     author       = {Forsythe, V. and
                     Evans, M.C. and
                     Burrell, A.G.},
     title        = {victoriyaforsythe/PyVALION},
     year         = 2025,
     publisher    = {Zenodo},
-    version      = {v0.0.1},
+    version      = {v0.1.0},
     doi          = {10.5281/zenodo.15413125},
     url          = {https://github.com/victoriyaforsythe/PyVALION}
   }
