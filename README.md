@@ -1,11 +1,11 @@
-<img width="200" height="200" src="https://github.com/victoriyaforsythe/PyVALION/blob/main/docs/figures/PyVALION_logo.png" alt="Black circle with lion ionosoheric vertical profile" title="PyVALION Logo" style="float:left;">
+<img width="200" height="200" src="https://github.com/victoriyaforsythe/PyVALION/blob/main/docs/figures/PyVALION_logo.png" alt="Black circle with lion ionospheric vertical profile" title="PyVALION Logo" style="float:left;">
 
 
 # PyVALION (Python VALidation for IONosphere)
 [![PyVALION Package latest release](https://img.shields.io/pypi/v/PyVALION.svg)](https://pypi.org/project/PyVALION/)
 [![Build Status](https://github.com/victoriyaforsythe/PyVALION/actions/workflows/main.yml/badge.svg)](https://github.com/victoriyaforsythe/PyVALION/actions/workflows/main.yml)
 [![Documentation Status](https://readthedocs.org/projects/pyvalion/badge/?version=latest)](https://pyvalion.readthedocs.io/en/latest/?badge=latest)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8235173.svg)](https://doi.org/10.5281/zenodo.8235173)
+[![DOI](https://zenodo.org/badge/968667202.svg)](https://doi.org/10.5281/zenodo.15413125)
 
 PyVALION is a Python-based software package for validating ionospheric electron density model outputs.
 
@@ -18,7 +18,7 @@ If you're validating your model across multiple days, you can run PyVALION in a 
 
 # Installation
 
-PyVALION can be installed from PyPI, which will handle all dependencies:
+PyVALION can be installed from PyPI, which handles all dependencies:
 
 ```
 pip install PyVALION
@@ -29,16 +29,14 @@ Alternatively, you can clone and install it from GitHub:
 ```
 git clone https://github.com/victoriyaforsythe/PyVALION.git
 cd PyVALION
-python -m build .
 pip install .
 ```
 
 See the documentation for details about the required dependencies.
 
-# Example Workflow
+# Example Workflow for GIRO Parameter Validation
 
-1. Create the model output dictionary
-Record your model output into a dictionary called model with the following keys: 'NmF2', 'hmF2', 'B0', and 'B1', shaped as [N_time, N_lat, N_lon].
+1. Create the model output dictionary: Record your model output into a dictionary called model with the following keys: 'NmF2', 'hmF2', 'B0', and 'B1', shaped as [N_time, N_lat, N_lon].
 
 N_time: number of time steps (e.g., 96 for 15-minute resolution)
 
@@ -48,15 +46,14 @@ N_lon: number of geographic longitudes
 
 All arrays must have the same shape. Otherwise, the forward operator G cannot be applied consistently.
 
-2. Define the units dictionary
+2. Define the units dictionary:
 
 ```
 units = {'NmF2': 'm$^{-3}$', 'hmF2': 'km', 'B0': 'km', 'B1': ' '}
-Ensure your model output is in these units.
 ```
+Ensure your model output is in these units.
 
-3. Create the atime array
-This array should have N_time elements and must be a list of datetime objects that match the time dimension of your model dictionary. Example for 15-minute resolution:
+3. Create the atime array: This array should have N_time elements and must be a list of datetime objects that match the time dimension of your model dictionary. Example for 15-minute resolution:
 
 ```
 dtime = datetime.datetime(year, month, day)
@@ -65,13 +62,11 @@ atime = pd.to_datetime(np.arange(dtime,
                                  datetime.timedelta(minutes=15)))
 ```
 
-4. Define the latitude array alat
-This array must have N_lat elements and match the second dimension in the model dictionary.
+4. Define the latitude array alat: This array must have N_lat elements and match the second dimension in the model dictionary.
 
-5. Define the longitude array alon
-This array must have N_lon elements and match the third dimension in the model dictionary.
+5. Define the longitude array alon: This array must have N_lon elements and match the third dimension in the model dictionary.
 
-6. Load the list of GIRO ionosondes
+6. Load the list of GIRO ionosondes:
 
 ```
 file_ion_name = os.path.join(PyVALION.giro_names_dir, 'GIRO_Ionosondes.p')
@@ -80,7 +75,7 @@ giro_name = pickle.load(open(file_ion_name, 'rb'))
 
 If you wish to exclude ionosondes used in your data assimilation, simply modify the giro_name['name'] array.
 
-7. Download GIRO parameters
+7. Download GIRO parameters:
 
 ```
 raw_data = PyVALION.library.download_GIRO_parameters(atime[0],
@@ -99,7 +94,7 @@ save_res_dir: path to save processed results
 
 name_run: your chosen name for this run
 
-8. Create the forward operator
+8. Create the forward operator:
 ```
 obs_data, obs_units, G, obs_info = PyVALION.library.find_G_and_y(atime,
                                                                  alon,
@@ -110,14 +105,14 @@ obs_data, obs_units, G, obs_info = PyVALION.library.find_G_and_y(atime,
                                                                  True)
 ```
 
-9. Compute residuals
+9. Compute residuals:
 
 ```
 model_data, residuals, model_units, res_ion = PyVALION.library.find_residuals(
     model, G, obs_data, obs_info, units)
 ```
 
-10. Plot results
+10. Plot results:
 ```
 # Map of ionosonde locations
 PyVALION.plotting.plot_ionosondes(obs_info,
@@ -152,6 +147,111 @@ PyVALION.plotting.plot_individual_mean_residuals(res_ion,
 
 ![Residuals](docs/figures/IonRes_hmF2.png)
 
+# Example Workflow for Jason TEC Validation
+
+
+1. Create the model output dictionary: Record your model output into a dictionary called model with the following key: 'TEC' shaped as [N_time, N_lat, N_lon].
+
+N_time: number of time steps (e.g., 96 for 15-minute resolution)
+
+N_lat: number of geographic latitudes
+
+N_lon: number of geographic longitudes
+
+2. Define the units dictionary:
+
+```
+units = {'TEC': 'TECU'}
+```
+Ensure your model output is in these units.
+
+3. Create the atime array: This array should have N_time elements and must be a list of datetime objects that match the time dimension of your model dictionary. Example for 15-minute resolution:
+
+```
+dtime = datetime.datetime(year, month, day)
+atime = pd.to_datetime(np.arange(dtime,
+                                 dtime + datetime.timedelta(days=1),
+                                 datetime.timedelta(minutes=15)))
+```
+
+4. Define the latitude array alat: This array must have N_lat elements and match the second dimension in the model dictionary.
+
+5. Define the longitude array alon: This array must have N_lon elements and match the third dimension in the model dictionary.
+
+6. Download the jason_manifest.txt file (provided by PyVALION) and save locally into data_save_dir. The local manifest will be updated with new THREDDS file locations if available.
+
+data_save_dir: path to save downloaded data
+
+7. Download all raw Jason TEC data for the validation time: If you need to exclude certain satellites, modify the sat_names array.
+
+```
+sat_names = np.array(["JA2", "JA3"])
+raw_data = PyVALION.library.download_Jason_TEC(atime[0],
+                                               atime[-1],
+                                               data_save_dir,
+                                               name_run=name_run,
+                                               save_data_option=True,
+                                               sat_names=sat_names)
+```
+
+data_save_dir: path to save downloaded data
+
+name_run: your chosen name for this run
+
+8. Downsample Jason TEC data to match model resolution:
+
+```
+data = PyVALION.library.downsample_Jason_TEC(raw_data,
+                                             ddeg,
+                                             save_dir=data_save_dir,
+                                             name_run=name_run,
+                                             save_data_option=True)
+```
+
+9. Create a forward operator for the Jason TEC dataset using the given model grid:
+
+```
+obs_data, obs_units, G = PyVALION.library.find_Jason_G_and_y(atime,
+                                                             alon,
+                                                             alat,
+                                                             data)
+```
+
+10. Compute residuals:
+
+```
+model_data, residuals, model_units = PyVALION.library.find_Jason_residuals(model,
+                                                                           G,
+                                                                           obs_data,
+                                                                           units)
+```
+
+11. Plot results:
+
+# Map of residuals
+```
+PyVALION.plotting.plot_TEC_residuals_map(obs_data['lat'],
+                                         obs_data['lon'],
+                                         residuals,
+                                         atime[0],
+                                         save_option=True,
+                                         save_dir=save_img_dir,
+                                         plot_name='TEC_Residuals_Map')
+```
+![Ionosondes_Map](docs/figures/TEC_Residuals_Map.png)
+
+# Histogram of residuals
+```
+PyVALION.plotting.plot_TEC_residuals_histogram(residuals,
+                                               model_units,
+                                               atime[0],
+                                               save_option=True,
+                                               save_dir=save_img_dir,
+                                               plot_name='TEC_Residuals')
+```
+
+![Residuals](docs/figures/TEC_Residuals.png)
+
 # Learn More
 
-See the [tutorials](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/tutorials) folder for an example that validates NmF2 and hmF2 from [PyIRI](https://github.com/victoriyaforsythe/PyIRI).
+See the [tutorials](https://github.com/victoriyaforsythe/PyVALION/tree/main/docs/tutorials) folder for examples that validate NmF2, hmF2, and TEC from [PyIRI](https://github.com/victoriyaforsythe/PyIRI).

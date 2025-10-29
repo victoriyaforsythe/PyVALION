@@ -40,7 +40,10 @@ dependencies = [
   "scipy",
   "cartopy",
   "pandas",
-  "PyIRI"
+  "PyIRI",
+  "netCDF4",
+  "siphon",
+  "tqdm"
 ]
 
 [project.optional-dependencies]
@@ -64,5 +67,3 @@ doc = [
 [project.urls]
 Documentation = "https://pyvalion.readthedocs.io/en/latest/"
 Source = "https://github.com/victoriyaforsythe/PyVALION"
-
-[tool.coverage.report]
