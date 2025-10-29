@@ -2,7 +2,7 @@
 All notable changes to this project are documented in this file. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## 0.X.X (XX-XX-2025)
+## 0.1.0 (10-29-2025)
 * Implemented Jason TEC functionality in `library.py`
 * Implemented Jason TEC plotting functions in `plotting.py`
 * Updated `pyproject.toml` to include new dependencies
