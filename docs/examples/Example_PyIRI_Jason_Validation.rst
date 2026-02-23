@@ -137,6 +137,7 @@ exclude certain satellites, modify the sat_names array.
                                                    data_save_dir,
                                                    name_run=name_run,
                                                    save_data_option=True,
+                                                   include_neg=True,
                                                    sat_names=sat_names)
 
 12. Downsample Jason TEC data to match model resolution.

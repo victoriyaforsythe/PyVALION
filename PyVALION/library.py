@@ -698,6 +698,7 @@ def download_Jason_TEC(time_start,
                        save_dir,
                        name_run='',
                        save_data_option=False,
+                       include_neg=True,
                        sat_names=np.array(["JA2", "JA3"]),
                        jason_manifest_filename="jason_manifest.txt"):
     """Retrieve Jason ionospheric TEC from from www.ncei.noaa.gov THREDDS.
@@ -717,6 +718,8 @@ def download_Jason_TEC(time_start,
     save_data_option : bool
         Option to save data as a pickle (.p) file into save_dir. Defaults to
         False.
+    include_neg : bool
+        Option to include negative TEC values in the output. Defaults to True.
     sat_names : array-like
         String arrays of Jason satellite names ("JA2" and/or "JA3").
     jason_manifest_filename : str
@@ -750,9 +753,9 @@ def download_Jason_TEC(time_start,
         # Perform different file reading routine for Jason-2 and Jason-2 files
         if "JA3" in url and any(sat_names == "JA3"):
             # data_file = read_jason3_file(url)
-            data_file = read_jason3_file(url)
+            data_file = read_jason3_file(url, include_neg=include_neg)
         elif "JA2" in url and any(sat_names == "JA2"):
-            data_file = read_jason2_file(url)
+            data_file = read_jason2_file(url, include_neg=include_neg)
 
         # Concatenate all fields in the dictionary
         # data_all = {k: np.concatenate([data_all[k], data_file[k]])
@@ -1191,7 +1194,7 @@ def make_empty_dict_data_jason():
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def read_jason2_file(j2url):
+def read_jason2_file(j2url, include_neg=True):
     """Read in relevant data from Jason-2 OPeNDAP URL.
 
     See OSTM/Jason-2 Products Handbook Section 4.2.5 for details.
@@ -1200,6 +1203,8 @@ def read_jason2_file(j2url):
     ----------
     j2url : str
         Jason-2 OPeNDAP url.
+    include_neg : bool
+        Option to include negative TEC values in the output. Defaults to True.
 
     Returns
     -------
@@ -1255,6 +1260,7 @@ def read_jason2_file(j2url):
         & (points_flag > 10)
     )
 
+    iono_ku = iono_ku.astype(float)
     iono_ku[~valid] = np.nan
 
     # Filter data
@@ -1265,7 +1271,9 @@ def read_jason2_file(j2url):
     tec = compute_jason_tec(iono_ku_filt)
     j2_sat_tec_bias = -3.5
     tec = tec + j2_sat_tec_bias
-    tec[tec < 0] = 0
+
+    if not include_neg:
+        tec[tec < 0] = 0
 
     # Initialize empy data dictionary
     data_all = make_empty_dict_data_jason()
@@ -1290,7 +1298,7 @@ def read_jason2_file(j2url):
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def read_jason3_file(j3url):
+def read_jason3_file(j3url, include_neg=True):
     """Read in relevant data from Jason-3 OPeNDAP URL.
 
     See OSTM/Jason-3 Products Handbook for details.
@@ -1299,6 +1307,8 @@ def read_jason3_file(j3url):
     ----------
     j3url : str
         Jason-3 OPeNDAP url.
+    include_neg : bool
+        Option to include negative TEC values in the output. Defaults to True.
 
     Returns
     -------
@@ -1354,6 +1364,7 @@ def read_jason3_file(j3url):
         & (points_flag > 10)
     )
 
+    iono_ku = iono_ku.astype(float)
     iono_ku[~valid] = np.nan
 
     # Filter data
@@ -1364,7 +1375,9 @@ def read_jason3_file(j3url):
     tec = compute_jason_tec(iono_ku_filt)
     j3_sat_tec_bias = -1
     tec = tec + j3_sat_tec_bias
-    tec[tec < 0] = 0
+    
+    if not include_neg:
+        tec[tec < 0] = 0
 
     # Initialize empy data dictionary
     data_all = make_empty_dict_data_jason()
