@@ -1375,7 +1375,7 @@ def read_jason3_file(j3url, include_neg=True):
     tec = compute_jason_tec(iono_ku_filt)
     j3_sat_tec_bias = -1
     tec = tec + j3_sat_tec_bias
-    
+
     if not include_neg:
         tec[tec < 0] = 0
 
