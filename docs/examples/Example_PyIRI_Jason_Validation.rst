@@ -182,7 +182,7 @@ grid.
                                                    save_dir=save_img_dir,
                                                    plot_name='TEC_Residuals_Map')
 
-.. image:: /docs/figures/TEC_Residuals_Map.png
+.. image:: /figures/TEC_Residuals_Map.png
     :width: 600px
     :align: center
     :alt: Map of residuals between model and Jason TEC.
@@ -198,7 +198,7 @@ grid.
                                                          save_dir=save_img_dir,
                                                          plot_name='TEC_Residuals')
 
-.. image:: /docs/figures/TEC_Residuals.png
+.. image:: /figures/TEC_Residuals.png
     :width: 300px
     :align: center
     :alt: Residuals between Jason TEC observations and model forecast.

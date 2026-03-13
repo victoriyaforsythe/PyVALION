@@ -61,6 +61,11 @@ manual_copyright = ', '.join(['2025', author])
 category = 'Space Physics'
 description = 'Python implementation for the ionospheric model validation.'
 
+# Avoid issues from linkcheck with Zenodo links
+linkcheck_ignore = [
+    r"https://zenodo.org/",
+]
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
