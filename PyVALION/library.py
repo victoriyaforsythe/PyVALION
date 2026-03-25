@@ -412,6 +412,7 @@ def find_G_and_y(adtime,
                  data,
                  save_dir,
                  name_run,
+                 interp_method='bilinear',
                  pickle_outputs=True):
     """Create geometry matrix G and observation vector.
 
@@ -429,6 +430,11 @@ def find_G_and_y(adtime,
         Directory where to save the downloaded files
     name_run : str
         String to add to the name of the files for saved results
+    interp_method : str, optional
+        Method for interpolating model data to observation points. Options are
+        'bilinear' (default) and 'nearest'. 'bilinear' performs bilinear
+        interpolation using the four nearest grid points, while 'nearest'
+        assigns the value of the nearest model grid point to each observation.
     pickle_outputs : bool
         It true the outputs are also pickled in the root directory, default
         is True.
@@ -523,11 +529,33 @@ def find_G_and_y(adtime,
     G = np.zeros((ay_name.size, adtime.size, alat.size, alon.size))
 
     PyVALION.logger.info('Forming G:')
+    # Loop through all observations
     for iob in range(0, ay_name.size):
         it = np.where(adtime == ay_time[iob])[0][0]
-        ind_lon = PyVALION.library.nearest_element(alon, ay_lon[iob])
-        ind_lat = PyVALION.library.nearest_element(alat, ay_lat[iob])
-        G[iob, it, ind_lat, ind_lon] = 1.
+
+        # Update G matrix (bilinear interpolation)
+        if interp_method == 'bilinear':
+            # Perform bilinear interpolation to find the weights for the
+            # fournearest grid points
+            weights, ind_lat, ind_lon = bilinear_weights(alat, alon,
+                                                         ay_lat[iob],
+                                                         ay_lon[iob])
+            # Update G matrix with the weights for the four nearest obs
+            for w, ind_lat, ind_lon in zip(weights, ind_lat, ind_lon):
+                G[iob, it, ind_lat, ind_lon] = w
+
+        # Update G matrix (nearest neighbor)
+        elif interp_method == 'nearest':
+            # Select nearest model grid element to obs lat/lon
+            ind_lon = PyVALION.library.nearest_element(alon, ay_lon[iob])
+            ind_lat = PyVALION.library.nearest_element(alat, ay_lat[iob])
+            G[iob, it, ind_lat, ind_lon] = 1.
+
+        # Raise error if invalid interpolation method is provided
+        else:
+            raise ValueError(
+                "Invalid interpolation method: "
+                f"{interp_method}. Choose 'bilinear' or 'nearest'.")
 
     PyVALION.logger.info('G has shape [N_obs, N_time, N_lat, N_lon] = ',
                          G.shape)
@@ -823,7 +851,7 @@ def create_manifest(output_file):
         "catalog.xml",
         "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/"
         "catalog.xml",
-        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/gdr/"
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr_f/gdr/"
         "catalog.xml"
     ]
 
@@ -917,7 +945,7 @@ def update_manifest(output_file):
     catalog_urls = [
         "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/"
         "catalog.xml",
-        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/gdr/"
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr_f/gdr/"
         "catalog.xml"
     ]
 
@@ -1404,7 +1432,7 @@ def read_jason3_file(j3url, include_neg=True):
 # -----------------------------------------------------------------------------
 def robust_iterative_filter(
     data_raw,
-    INIT_SIGMA=5,
+    INIT_SIGMA=3,
     DATA_GAP_MAX=0,
     MEDIAN_NB_PTS=30,
     MEDIAN_NB_PTS_MIN=30,
@@ -1803,8 +1831,8 @@ def downsample_Jason_TEC(data_all,
     data_resamp = downsample_dict(data_all, N_resamp)
 
     if save_data_option:
-        # Jason resample data filename
-        ddeg_str = f"{ddeg:.2f}"
+        # Jason resample data filename, change ddeg to original for clarity
+        ddeg_str = f"{ddeg * 2:.2f}"
         file_str_resample = ('Jason_TEC_resampled_' + ddeg_str + 'res_'
                              + name_run + '.p')
         file_path_resample = os.path.join(save_dir, file_str_resample)

@@ -149,6 +149,7 @@ grid.
                                                                      raw_data,
                                                                      save_res_dir,
                                                                      name_run,
+                                                                     'bilinear',
                                                                      True)
 
 12. Find residuals between the observed data and model forecast.
