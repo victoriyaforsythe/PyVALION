@@ -60,8 +60,9 @@ doc = [
   "ipython",
   "myst_parser",
   "numpydoc",
+  "pkg_resources",
   "sphinx",
-  "sphinx_rtd_theme >= 1.2.2"
+  "sphinx_rtd_theme"
 ]
 
 [project.urls]
