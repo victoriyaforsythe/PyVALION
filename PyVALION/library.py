@@ -591,8 +591,8 @@ def find_G_and_y(adtime,
 def find_model_data(field, G):
     """Find model data for the given field and forward operator.
 
-    Returns
-    -------
+    Parameters
+    ----------
     field : array-like
         2-D filed of a model parameter in shape [N_time, N_lat, N_lon].
     G : array-like
@@ -633,8 +633,8 @@ def find_model_data(field, G):
 def find_residuals(model, G, obs_data, obs_info, units):
     """Find model data for the given field and forward operator.
 
-    Returns
-    -------
+    Parameters
+    ----------
     model : dict
         Dictionary with model parameters in shape [N_time, N_lat, N_lon].
     G : array-like
