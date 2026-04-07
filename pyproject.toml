@@ -60,7 +60,7 @@ doc = [
   "ipython",
   "myst_parser",
   "numpydoc",
-  "setuptools",
+  "pyproject-parser",
   "sphinx",
   "sphinx_rtd_theme"
 ]
