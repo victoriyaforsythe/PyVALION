@@ -61,7 +61,7 @@ doc = [
   "myst_parser",
   "numpydoc",
   "pyproject-parser",
-  "sphinx",
+  "sphinx < 9.0",
   "sphinx_rtd_theme"
 ]
 
