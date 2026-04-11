@@ -72,7 +72,7 @@ def download_GIRO_parameters(time_start,
                                   time_start.strftime('%Y%m%dT%H%MZ'), '-',
                                   time_finish.strftime('%Y%m%dT%H%MZ')]))
 
-    output_flag = np.empty((ion_name.size), dtype=bool)
+    output_flag = np.empty((ion_name.size,), dtype=bool)
 
     # Open a file that has the names and locations of all GIRO stations
     # This is important because the user might want to reduce the number
@@ -110,15 +110,15 @@ def download_GIRO_parameters(time_start,
         subprocess.run(["wget", "-O", output_file_txt, url, '-q'])
 
         # Empty arrays to concatenate
-        adtime = np.empty((0), dtype=datetime.datetime)
-        ascore = np.empty((0), dtype=float)
-        afof2 = np.empty((0), dtype=float)
-        ahmf2 = np.empty((0), dtype=float)
-        aB0 = np.empty((0), dtype=float)
-        aB1 = np.empty((0), dtype=float)
-        alon = np.empty((0), dtype=float)
-        alat = np.empty((0), dtype=float)
-        acode = np.empty((0), dtype=object)
+        adtime = np.empty((0,), dtype=datetime.datetime)
+        ascore = np.empty((0,), dtype=float)
+        afof2 = np.empty((0,), dtype=float)
+        ahmf2 = np.empty((0,), dtype=float)
+        aB0 = np.empty((0,), dtype=float)
+        aB1 = np.empty((0,), dtype=float)
+        alon = np.empty((0,), dtype=float)
+        alat = np.empty((0,), dtype=float)
+        acode = np.empty((0,), dtype=object)
 
         # Open downloaded .txt GIRO file and read it
         with open(output_file_txt, 'r') as file:
@@ -166,8 +166,8 @@ def download_GIRO_parameters(time_start,
     # The size is the same as the given array ion_name.
 
     # Create new dictionary to store filtered data
-    empty_flt = np.empty((0), dtype=float)
-    empty_str = np.empty((0), dtype=str)
+    empty_flt = np.empty((0,), dtype=float)
+    empty_str = np.empty((0,), dtype=str)
     giro_name_good = {'name': empty_str, 'city': empty_str, 'lat': empty_flt,
                       'lon': empty_flt}
 
