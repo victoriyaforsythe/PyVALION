@@ -16,6 +16,7 @@ import re
 from siphon.catalog import TDSCatalog
 import subprocess
 from tqdm import tqdm
+from urllib.request import urlretrieve, urlcleanup
 
 import numpy as np
 import pandas as pd
@@ -99,15 +100,27 @@ def download_GIRO_parameters(time_start,
         output_file_pic = os.path.join(data_save_dir,
                                        file_name_str + '.p')
 
-        # String for wget in GIRO-desired format
-        url = ''.join((
-            "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=", ionosonde,
-            "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=",
-            time_start.strftime('%Y/%m/%d+%H:%M:%S'), "&toDate=",
-            time_finish.strftime('%Y/%m/%d+%H:%M:%S')))
+        # Retrieve the GIRO text file
+        if not os.path.isfile(output_file_txt):
+            # String for wget in GIRO-desired format
+            url = ''.join((
+                "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=", ionosonde,
+                "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=",
+                time_start.strftime('%Y/%m/%d+%H:%M:%S'), "&toDate=",
+                time_finish.strftime('%Y/%m/%d+%H:%M:%S')))
+            PyVALION.logger.debug(f"Attempting to download of {output_file_txt} from {url}")
 
-        # Run wget
-        subprocess.run(["wget", "-O", output_file_txt, url, '-q'])
+            n_attempts = 3
+            for attempt in range(1, n_attempts + 1):
+                try:
+                    urlretrieve(url, output_file_txt)
+                    urlcleanup()
+                    break
+                except:
+                    PyVALION.logger.warning(f"Failed attempt at #{attempt} for {output_file_txt} from {url}")
+            else:
+                PyVALION.logger.error(f"Unable to download {output_file_txt} from {url} after {n_attempts} attempts")
+                raise OSError(f"Unable to download {output_file_txt} from {url} after {n_attempts} attempts")
 
         # Empty arrays to concatenate
         adtime = np.empty((0,), dtype=datetime.datetime)
