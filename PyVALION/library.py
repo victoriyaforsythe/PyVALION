@@ -12,12 +12,13 @@ import datetime
 import os
 import pickle
 import re
-from urllib.request import urlretrieve, urlcleanup
+from urllib.request import urlcleanup
+from urllib.request import urlretrieve
 
-import PyIRI
 import netCDF4
 import numpy as np
 import pandas as pd
+import PyIRI
 from PyIRI.main_library import adjust_longitude as adjust_lon
 from siphon.catalog import TDSCatalog
 from tqdm import tqdm
@@ -101,12 +102,18 @@ def download_GIRO_parameters(time_start,
         # Retrieve the GIRO text file
         if not os.path.isfile(output_file_txt):
             # String for wget in GIRO-desired format
-            url = ''.join((
-                "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=", ionosonde,
-                "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=",
-                time_start.strftime('%Y/%m/%d+%H:%M:%S'), "&toDate=",
-                time_finish.strftime('%Y/%m/%d+%H:%M:%S')))
-            PyVALION.logger.debug(f"Attempting to download of {output_file_txt} from {url}")
+            url = ''.join(
+                [
+                    "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=",
+                    ionosonde,
+                    "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=",
+                    time_start.strftime('%Y/%m/%d+%H:%M:%S'), "&toDate=",
+                    time_finish.strftime('%Y/%m/%d+%H:%M:%S')
+                ]
+            )
+            PyVALION.logger.debug(
+                f"Attempting to download of {output_file_txt} from {url}"
+            )
 
             n_attempts = 3
             for attempt in range(1, n_attempts + 1):
@@ -114,11 +121,18 @@ def download_GIRO_parameters(time_start,
                     urlretrieve(url, output_file_txt)
                     urlcleanup()
                     break
-                except:
-                    PyVALION.logger.warning(f"Failed attempt at #{attempt} for {output_file_txt} from {url}")
+                except (Exception,) as exc:
+                    PyVALION.logger.warning(
+                        f"Failed attempt at #{attempt} for {output_file_txt}"
+                        + f" from {url} due to {exc}"
+                    )
             else:
-                PyVALION.logger.error(f"Unable to download {output_file_txt} from {url} after {n_attempts} attempts")
-                raise OSError(f"Unable to download {output_file_txt} from {url} after {n_attempts} attempts")
+                msg = (
+                    f"Unable to download {output_file_txt} from {url} after"
+                    + f" {n_attempts} attempts."
+                )
+                PyVALION.logger.error(msg)
+                raise OSError(msg)
 
         # Empty arrays to concatenate
         adtime = np.empty((0,), dtype=datetime.datetime)
