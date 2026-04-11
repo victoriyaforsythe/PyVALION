@@ -67,6 +67,7 @@ def download_GIRO_parameters(time_start,
         Dictionary with all the data combined.
 
     """
+    ion_name = np.asarray(ion_name, dtype=str)
     PyVALION.logger.info(''.join(['Downloading data from GIRO for: ',
                                   time_start.strftime('%Y%m%dT%H%MZ'), '-',
                                   time_finish.strftime('%Y%m%dT%H%MZ')]))
@@ -468,6 +469,7 @@ def find_G_and_y(adtime,
     """
 
     # Look for 15/2 min data around
+    adtime = np.asarray(adtime, dtype=object)
     adtime0 = adtime - datetime.timedelta(minutes=15) / 2.
     adtime1 = adtime + datetime.timedelta(minutes=15) / 2.
 
@@ -727,7 +729,7 @@ def download_Jason_TEC(time_start,
     data_all : dict
         Dictionary with all the data combined.
     """
-
+    sat_names = np.asarray(sat_names, dtype=str)
     # Create or update Jason file manifest
     jason_manifest_path = os.path.join(save_dir, jason_manifest_filename)
     create_or_update_manifest(jason_manifest_path)
