@@ -9,23 +9,21 @@
 """
 
 import datetime
-import netCDF4
 import os
 import pickle
 import re
-from siphon.catalog import TDSCatalog
-import subprocess
-from tqdm import tqdm
 from urllib.request import urlretrieve, urlcleanup
 
+import PyIRI
+import netCDF4
 import numpy as np
 import pandas as pd
+from PyIRI.main_library import adjust_longitude as adjust_lon
+from siphon.catalog import TDSCatalog
+from tqdm import tqdm
 
-import PyIRI
 import PyVALION
 from PyVALION import logger
-
-from PyIRI.main_library import adjust_longitude as adjust_lon
 
 
 # -----------------------------------------------------------------------------
