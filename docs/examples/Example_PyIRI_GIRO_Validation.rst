@@ -50,8 +50,7 @@ results.
     # Convert atime to an array of decimal hours
     aUT = atime.hour + atime.minute / 60. + atime.second / 3600.
 
-5. Provide the F10.7 value for this day. You can look it up at OMNIWeb:
-https://omniweb.gsfc.nasa.gov/form/dx1.html
+5. Provide the F10.7 value for this day. You can look it up at OMNIWeb.
 
 ::
 
