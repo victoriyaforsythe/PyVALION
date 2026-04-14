@@ -2,7 +2,7 @@
    contain the root `toctree` directive.
 
 Welcome to the PyVALION documentation
-==================================
+=====================================
 
 This documentation describes the PyVALION module.
 
