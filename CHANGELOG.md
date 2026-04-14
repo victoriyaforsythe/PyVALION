@@ -2,7 +2,7 @@
 All notable changes to this project are documented in this file. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## 0.2.0 (XX-XX-2026)
+## 0.2.0 (04-14-2026)
 * Updeted the manifest file to comply with current Jason format
 * Added bilinear interpolation to the Jason and GIRO routines
 * Added the flag to include Jason negative TEC values
