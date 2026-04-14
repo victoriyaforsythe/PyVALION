@@ -412,6 +412,7 @@ def find_G_and_y(adtime,
                  data,
                  save_dir,
                  name_run,
+                 interp_method='bilinear',
                  pickle_outputs=True):
     """Create geometry matrix G and observation vector.
 
@@ -429,6 +430,11 @@ def find_G_and_y(adtime,
         Directory where to save the downloaded files
     name_run : str
         String to add to the name of the files for saved results
+    interp_method : str, optional
+        Method for interpolating model data to observation points. Options are
+        'bilinear' (default) and 'nearest'. 'bilinear' performs bilinear
+        interpolation using the four nearest grid points, while 'nearest'
+        assigns the value of the nearest model grid point to each observation.
     pickle_outputs : bool
         It true the outputs are also pickled in the root directory, default
         is True.
@@ -523,11 +529,33 @@ def find_G_and_y(adtime,
     G = np.zeros((ay_name.size, adtime.size, alat.size, alon.size))
 
     PyVALION.logger.info('Forming G:')
+    # Loop through all observations
     for iob in range(0, ay_name.size):
         it = np.where(adtime == ay_time[iob])[0][0]
-        ind_lon = PyVALION.library.nearest_element(alon, ay_lon[iob])
-        ind_lat = PyVALION.library.nearest_element(alat, ay_lat[iob])
-        G[iob, it, ind_lat, ind_lon] = 1.
+
+        # Update G matrix (bilinear interpolation)
+        if interp_method == 'bilinear':
+            # Perform bilinear interpolation to find the weights for the
+            # fournearest grid points
+            weights, ind_lat, ind_lon = bilinear_weights(alat, alon,
+                                                         ay_lat[iob],
+                                                         ay_lon[iob])
+            # Update G matrix with the weights for the four nearest obs
+            for w, ind_lat, ind_lon in zip(weights, ind_lat, ind_lon):
+                G[iob, it, ind_lat, ind_lon] = w
+
+        # Update G matrix (nearest neighbor)
+        elif interp_method == 'nearest':
+            # Select nearest model grid element to obs lat/lon
+            ind_lon = PyVALION.library.nearest_element(alon, ay_lon[iob])
+            ind_lat = PyVALION.library.nearest_element(alat, ay_lat[iob])
+            G[iob, it, ind_lat, ind_lon] = 1.
+
+        # Raise error if invalid interpolation method is provided
+        else:
+            raise ValueError(
+                "Invalid interpolation method: "
+                f"{interp_method}. Choose 'bilinear' or 'nearest'.")
 
     PyVALION.logger.info('G has shape [N_obs, N_time, N_lat, N_lon] = ',
                          G.shape)
@@ -563,8 +591,8 @@ def find_G_and_y(adtime,
 def find_model_data(field, G):
     """Find model data for the given field and forward operator.
 
-    Returns
-    -------
+    Parameters
+    ----------
     field : array-like
         2-D filed of a model parameter in shape [N_time, N_lat, N_lon].
     G : array-like
@@ -605,8 +633,8 @@ def find_model_data(field, G):
 def find_residuals(model, G, obs_data, obs_info, units):
     """Find model data for the given field and forward operator.
 
-    Returns
-    -------
+    Parameters
+    ----------
     model : dict
         Dictionary with model parameters in shape [N_time, N_lat, N_lon].
     G : array-like
@@ -698,6 +726,7 @@ def download_Jason_TEC(time_start,
                        save_dir,
                        name_run='',
                        save_data_option=False,
+                       include_neg=True,
                        sat_names=np.array(["JA2", "JA3"]),
                        jason_manifest_filename="jason_manifest.txt"):
     """Retrieve Jason ionospheric TEC from from www.ncei.noaa.gov THREDDS.
@@ -717,6 +746,8 @@ def download_Jason_TEC(time_start,
     save_data_option : bool
         Option to save data as a pickle (.p) file into save_dir. Defaults to
         False.
+    include_neg : bool
+        Option to include negative TEC values in the output. Defaults to True.
     sat_names : array-like
         String arrays of Jason satellite names ("JA2" and/or "JA3").
     jason_manifest_filename : str
@@ -750,9 +781,9 @@ def download_Jason_TEC(time_start,
         # Perform different file reading routine for Jason-2 and Jason-2 files
         if "JA3" in url and any(sat_names == "JA3"):
             # data_file = read_jason3_file(url)
-            data_file = read_jason3_file(url)
+            data_file = read_jason3_file(url, include_neg=include_neg)
         elif "JA2" in url and any(sat_names == "JA2"):
-            data_file = read_jason2_file(url)
+            data_file = read_jason2_file(url, include_neg=include_neg)
 
         # Concatenate all fields in the dictionary
         # data_all = {k: np.concatenate([data_all[k], data_file[k]])
@@ -820,7 +851,7 @@ def create_manifest(output_file):
         "catalog.xml",
         "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/"
         "catalog.xml",
-        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/gdr/"
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr_f/gdr/"
         "catalog.xml"
     ]
 
@@ -914,7 +945,7 @@ def update_manifest(output_file):
     catalog_urls = [
         "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/"
         "catalog.xml",
-        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr/gdr/gdr/"
+        "https://www.ncei.noaa.gov/thredds-ocean/catalog/jason3/gdr_f/gdr/"
         "catalog.xml"
     ]
 
@@ -1191,7 +1222,7 @@ def make_empty_dict_data_jason():
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def read_jason2_file(j2url):
+def read_jason2_file(j2url, include_neg=True):
     """Read in relevant data from Jason-2 OPeNDAP URL.
 
     See OSTM/Jason-2 Products Handbook Section 4.2.5 for details.
@@ -1200,6 +1231,8 @@ def read_jason2_file(j2url):
     ----------
     j2url : str
         Jason-2 OPeNDAP url.
+    include_neg : bool
+        Option to include negative TEC values in the output. Defaults to True.
 
     Returns
     -------
@@ -1255,6 +1288,7 @@ def read_jason2_file(j2url):
         & (points_flag > 10)
     )
 
+    iono_ku = iono_ku.astype(float)
     iono_ku[~valid] = np.nan
 
     # Filter data
@@ -1265,7 +1299,9 @@ def read_jason2_file(j2url):
     tec = compute_jason_tec(iono_ku_filt)
     j2_sat_tec_bias = -3.5
     tec = tec + j2_sat_tec_bias
-    tec[tec < 0] = 0
+
+    if not include_neg:
+        tec[tec < 0] = 0
 
     # Initialize empy data dictionary
     data_all = make_empty_dict_data_jason()
@@ -1290,7 +1326,7 @@ def read_jason2_file(j2url):
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def read_jason3_file(j3url):
+def read_jason3_file(j3url, include_neg=True):
     """Read in relevant data from Jason-3 OPeNDAP URL.
 
     See OSTM/Jason-3 Products Handbook for details.
@@ -1299,6 +1335,8 @@ def read_jason3_file(j3url):
     ----------
     j3url : str
         Jason-3 OPeNDAP url.
+    include_neg : bool
+        Option to include negative TEC values in the output. Defaults to True.
 
     Returns
     -------
@@ -1354,6 +1392,7 @@ def read_jason3_file(j3url):
         & (points_flag > 10)
     )
 
+    iono_ku = iono_ku.astype(float)
     iono_ku[~valid] = np.nan
 
     # Filter data
@@ -1364,7 +1403,9 @@ def read_jason3_file(j3url):
     tec = compute_jason_tec(iono_ku_filt)
     j3_sat_tec_bias = -1
     tec = tec + j3_sat_tec_bias
-    tec[tec < 0] = 0
+
+    if not include_neg:
+        tec[tec < 0] = 0
 
     # Initialize empy data dictionary
     data_all = make_empty_dict_data_jason()
@@ -1391,7 +1432,7 @@ def read_jason3_file(j3url):
 # -----------------------------------------------------------------------------
 def robust_iterative_filter(
     data_raw,
-    INIT_SIGMA=5,
+    INIT_SIGMA=3,
     DATA_GAP_MAX=0,
     MEDIAN_NB_PTS=30,
     MEDIAN_NB_PTS_MIN=30,
@@ -1740,7 +1781,8 @@ def downsample_Jason_TEC(data_all,
     data_all : dict
         Dictionary of raw Jason data.
     ddeg : float
-        Model resolution in degrees.
+        Model resolution in degrees. Data will be resampled to approximately
+        half this resolution in order to maintain adequate sampling.
     save_dir : str, optional
         Directory where the resampled data will be saved. Defaults to ''.
     name_run : str, optional
@@ -1760,34 +1802,37 @@ def downsample_Jason_TEC(data_all,
     lon_j = data_all['lon']
     dtime_j = data_all['dtime']
 
+    # Adjust model resolution to be approximately half the specified resolution
+    ddeg = ddeg / 2
+
     # Determine a resampling period estimate from an hour of data
-    hr1_start = dtime_j[0]
-    hr1_end = hr1_start + pd.Timedelta(hours=1)
+    sample_start = dtime_j[0]
+    sample_end = sample_start + pd.Timedelta(hours=2)
     # Indices for an hour of data
-    hr1_ind = ((dtime_j >= hr1_start) & (dtime_j <= hr1_end))
+    sample_ind = ((dtime_j >= sample_start) & (dtime_j <= sample_end))
     # Select just 1st hr of data
-    lon_hr1 = lon_j[hr1_ind]
-    lat_hr1 = lat_j[hr1_ind]
+    lon_sample = lon_j[sample_ind]
+    lat_sample = lat_j[sample_ind]
 
     # Unique String Resampling
-    coor_str, _, _ = round_and_stringify(lat_hr1,
-                                         lon_hr1,
+    coor_str, _, _ = round_and_stringify(lat_sample,
+                                         lon_sample,
                                          ddeg)
 
     _, unq_ind = np.unique(coor_str, return_index=True)
 
     # Determine estimate of resampling step
-    N_1hr = len(lat_hr1)
-    N_1hr_resamp = len(unq_ind)
-    N_resamp = np.round(N_1hr / N_1hr_resamp).astype(int)
+    N_sample = len(lat_sample)
+    N_unq = len(unq_ind)
+    N_resamp = np.round(N_sample / N_unq).astype(int)
     PyVALION.logger.info(f"\nResampling Jason TEC data for {ddeg:.2f} "
                          "degree resolution.")
 
     data_resamp = downsample_dict(data_all, N_resamp)
 
     if save_data_option:
-        # Jason resample data filename
-        ddeg_str = f"{ddeg:.2f}"
+        # Jason resample data filename, change ddeg to original for clarity
+        ddeg_str = f"{ddeg * 2:.2f}"
         file_str_resample = ('Jason_TEC_resampled_' + ddeg_str + 'res_'
                              + name_run + '.p')
         file_path_resample = os.path.join(save_dir, file_str_resample)
@@ -1882,7 +1927,8 @@ def downsample_dict(data_raw, N):
 def find_Jason_G_and_y(adtime,
                        alon,
                        alat,
-                       data):
+                       data,
+                       interp_method='bilinear'):
     """Create geometry matrix G and observation vector y.
 
     Parameters
@@ -1896,6 +1942,11 @@ def find_Jason_G_and_y(adtime,
     data : dict
         Dictionary of Jason data produced by `download_Jason_TEC` or
         `downsample_Jason_TEC`.
+    interp_method : str, optional
+        Method for interpolating model data to observation points. Options are
+        'bilinear' (default) and 'nearest'. 'bilinear' performs bilinear
+        interpolation using the four nearest grid points, while 'nearest'
+        assigns the value of the nearest model grid point to each observation.
 
     Returns
     -------
@@ -1957,13 +2008,32 @@ def find_Jason_G_and_y(adtime,
             ay_name = np.concatenate((ay_name, ob_name), axis=None)
             ay_time = np.concatenate((ay_time, ob_time), axis=None)
 
-            # Update G matrix
-            # Select nearest model grid element to obs lat/lon
-            i_lat = nearest_element(alat, ob_lat)
-            i_lon = nearest_element(alon, ob_lon)
+            # Update G matrix (bilinear interpolation)
+            if interp_method == 'bilinear':
+                # Perform bilinear interpolation to find the weights for the
+                # fournearest grid points
+                weights, i_lat, i_lon = bilinear_weights(alat, alon, ob_lat,
+                                                         ob_lon)
+                # Update G matrix with the weights for the four nearest obs
+                for w, lat_idx, lon_idx in zip(weights, i_lat, i_lon):
+                    G[i, i_t, lat_idx, lon_idx] = w
 
-            # Form G matrix
-            G[i, i_t, i_lat, i_lon] = 1.
+            # Update G matrix (nearest neighbor)
+            elif interp_method == 'nearest':
+                # Select nearest model grid element to obs lat/lon
+                i_lat = nearest_element(alat, ob_lat)
+                i_lon = nearest_element(alon, ob_lon)
+
+                # Form G matrix
+                G[i, i_t, i_lat, i_lon] = 1.
+
+            # Raise error if invalid interpolation method is provided
+            else:
+                raise ValueError(
+                    "Invalid interpolation method: "
+                    f"{interp_method}. Choose 'bilinear' or 'nearest'.")
+
+            # Update sample iterator
             i = i + 1
 
     PyVALION.logger.info('G has shape [N_obs, N_time, N_lat, N_lon] = ',
@@ -1977,6 +2047,71 @@ def find_Jason_G_and_y(adtime,
              'time': 'datetime object', 'name': 'unitless'}
 
     return y, units, G
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+def bilinear_weights(alat, alon, ob_lat, ob_lon):
+    """Compute bilinear interpolation weights for a lat/lon grid.
+
+    Parameters
+    ----------
+    alat : array-like
+        1D array of model latitudes (monotonic).
+    alon : array-like
+        1D array of model longitudes (monotonic).
+    ob_lat : float
+        Observation latitude.
+    ob_lon : float
+        Observation longitude.
+
+    Returns
+    -------
+    weights : ndarray
+        Array of four bilinear interpolation weights.
+    i_lat : ndarray
+        Array of four latitude indices.
+    i_lon : ndarray
+        Array of four longitude indices.
+    """
+    alat = np.asarray(alat)
+    alon = np.asarray(alon)
+
+    # Find insertion indices
+    lat_idx = np.searchsorted(alat, ob_lat) - 1
+    lon_idx = np.searchsorted(alon, ob_lon) - 1
+
+    # Clamp indices to valid range
+    lat_idx = np.clip(lat_idx, 0, len(alat) - 2)
+    lon_idx = np.clip(lon_idx, 0, len(alon) - 2)
+
+    lat0 = alat[lat_idx]
+    lat1 = alat[lat_idx + 1]
+    lon0 = alon[lon_idx]
+    lon1 = alon[lon_idx + 1]
+
+    # Handle degenerate grid spacing safely
+    if lat1 == lat0 or lon1 == lon0:
+        weights = np.array([1.0, 0.0, 0.0, 0.0])
+        i_lat = np.array([lat_idx] * 4)
+        i_lon = np.array([lon_idx] * 4)
+        return weights, i_lat, i_lon
+
+    # Compute normalized distances
+    t = (ob_lat - lat0) / (lat1 - lat0)
+    u = (ob_lon - lon0) / (lon1 - lon0)
+
+    # Bilinear weights
+    w00 = (1 - t) * (1 - u)
+    w01 = (1 - t) * u
+    w10 = t * (1 - u)
+    w11 = t * u
+
+    weights = np.array([w00, w01, w10, w11])
+    i_lat = np.array([lat_idx, lat_idx, lat_idx + 1, lat_idx + 1])
+    i_lon = np.array([lon_idx, lon_idx + 1, lon_idx, lon_idx + 1])
+
+    return weights, i_lat, i_lon
 
 
 # -----------------------------------------------------------------------------

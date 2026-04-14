@@ -50,8 +50,7 @@ results.
     # Convert atime to an array of decimal hours
     aUT = atime.hour + atime.minute / 60. + atime.second / 3600.
 
-5. Provide the F10.7 value for this day. You can look it up at OMNIWeb:
-https://omniweb.gsfc.nasa.gov/form/dx1.html
+5. Provide the F10.7 value for this day. You can look it up at OMNIWeb.
 
 ::
 
@@ -149,6 +148,7 @@ grid.
                                                                      raw_data,
                                                                      save_res_dir,
                                                                      name_run,
+                                                                     'bilinear',
                                                                      True)
 
 12. Find residuals between the observed data and model forecast.
@@ -171,7 +171,7 @@ validation day.
                                       save_res_dir,
                                       plot_name='Ionosondes_Map')
 
-.. image:: /docs/figures/Ionosondes_Map.png
+.. image:: /figures/Ionosondes_Map.png
     :width: 600px
     :align: center
     :alt: GIRO Ionosondes Used for the Validation.
@@ -186,7 +186,7 @@ validation day.
                                      save_res_dir,
                                      plot_name='Residuals')
 
-.. image:: /docs/figures/Residuals.png
+.. image:: /figures/Residuals.png
     :width: 600px
     :align: center
     :alt: Residuals between observations and model forecast.
@@ -203,12 +203,12 @@ each ionosonde
                                                      save_res_dir,
                                                      plot_name='IonRes')
 
-.. image:: /docs/figures/IonRes_NmF2.png
+.. image:: /figures/IonRes_NmF2.png
     :width: 600px
     :align: center
     :alt: Mean NmF2 residuals for each ionosonde.
 
-.. image:: /docs/figures/IonRes_hmF2.png
+.. image:: /figures/IonRes_hmF2.png
     :width: 600px
     :align: center
     :alt: Mean hmF2 residuals for each ionosonde.
