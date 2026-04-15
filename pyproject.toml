@@ -60,7 +60,8 @@ doc = [
   "numpydoc",
   "pyproject-parser",
   "sphinx < 9.0",
-  "sphinx_rtd_theme"
+  "sphinx_rtd_theme",
+  "jupyter"
 ]
 
 [project.urls]
