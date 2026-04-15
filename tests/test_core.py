@@ -4,9 +4,11 @@
 
 import datetime
 import numpy as np
+from numpy.testing import assert_allclose
 import pandas as pd
 
 from PyVALION.library import apply_median_filter
+from PyVALION.library import bilinear_weights
 from PyVALION.library import compute_jason_tec
 from PyVALION.library import compute_lanczos_kernel
 from PyVALION.library import concat_data_dicts
@@ -301,3 +303,103 @@ def test_sza_data_space_known_results():
     expected = np.array([[64.17772638, 81.58068788]])
     assert np.allclose(result, expected, atol=1e-6), (
         f"Expected {expected}, got {result}")
+
+
+def test_bilinear_weights_regular_case():
+    """Test bilinear weights for a typical interior grid point."""
+    alat = np.array([0.0, 1.0, 2.0])
+    alon = np.array([10.0, 11.0, 12.0])
+
+    ob_lat = 0.25
+    ob_lon = 10.75
+
+    weights, i_lat, i_lon = bilinear_weights(alat, alon, ob_lat, ob_lon)
+
+    # Check indices correspond to surrounding cell
+    assert np.array_equal(i_lat, np.array([0, 0, 1, 1]))
+    assert np.array_equal(i_lon, np.array([0, 1, 0, 1]))
+
+    # Check weights sum to 1
+    assert_allclose(weights.sum(), 1.0)
+
+    # Verify bilinear interpolation result
+    grid = np.array([
+        [1.0, 2.0],
+        [3.0, 4.0],
+    ])
+
+    interp = np.sum(weights * grid.flatten())
+
+    # Manual bilinear computation
+    t = 0.25
+    u = 0.75
+    expected = (
+        (1 - t) * (1 - u) * 1.0
+        + (1 - t) * u * 2.0
+        + t * (1 - u) * 3.0
+        + t * u * 4.0
+    )
+
+    assert_allclose(interp, expected)
+
+
+def test_weights_sum_to_one():
+    """Ensure weights always sum to one."""
+    alat = np.array([0.0, 1.0])
+    alon = np.array([10.0, 11.0])
+
+    weights, _, _ = bilinear_weights(alat, alon, 0.4, 10.6)
+
+    assert_allclose(weights.sum(), 1.0)
+
+
+def test_observation_on_grid_point():
+    """If observation lies exactly on a grid node."""
+    alat = np.array([0.0, 1.0, 2.0])
+    alon = np.array([10.0, 11.0, 12.0])
+
+    ob_lat = 1.0
+    ob_lon = 11.0
+
+    weights, i_lat, i_lon = bilinear_weights(alat, alon, ob_lat, ob_lon)
+
+    # Grid point should receive full weight
+    assert_allclose(weights, np.array([0.0, 0.0, 0.0, 1.0]))
+
+    # Indices should correspond to surrounding cell
+    assert np.array_equal(i_lat, np.array([0, 0, 1, 1]))
+    assert np.array_equal(i_lon, np.array([0, 1, 0, 1]))
+
+
+def test_observation_on_lat_grid_line():
+    """Observation exactly on a latitude grid line."""
+    alat = np.array([0.0, 1.0, 2.0])
+    alon = np.array([10.0, 11.0])
+
+    ob_lat = 1.0
+    ob_lon = 10.5
+
+    weights, _, _ = bilinear_weights(alat, alon, ob_lat, ob_lon)
+
+    # Only upper latitude row should contribute
+    assert_allclose(weights[0], 0.0)
+    assert_allclose(weights[1], 0.0)
+
+    assert_allclose(weights.sum(), 1.0)
+
+
+def test_observation_on_lon_grid_line():
+    """Observation exactly on a longitude grid line."""
+    alat = np.array([0.0, 1.0])
+    alon = np.array([10.0, 11.0, 12.0])
+
+    ob_lat = 0.5
+    ob_lon = 11.0
+
+    weights, _, _ = bilinear_weights(alat, alon, ob_lat, ob_lon)
+
+    # Only right column should contribute
+    assert_allclose(weights[0], 0.0)
+    assert_allclose(weights[2], 0.0)
+
+    assert_allclose(weights.sum(), 1.0)

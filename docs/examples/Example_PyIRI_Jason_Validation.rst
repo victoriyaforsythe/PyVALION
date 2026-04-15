@@ -137,6 +137,7 @@ exclude certain satellites, modify the sat_names array.
                                                    data_save_dir,
                                                    name_run=name_run,
                                                    save_data_option=True,
+                                                   include_neg=True,
                                                    sat_names=sat_names)
 
 12. Downsample Jason TEC data to match model resolution.
@@ -181,7 +182,7 @@ grid.
                                                    save_dir=save_img_dir,
                                                    plot_name='TEC_Residuals_Map')
 
-.. image:: /docs/figures/TEC_Residuals_Map.png
+.. image:: /figures/TEC_Residuals_Map.png
     :width: 600px
     :align: center
     :alt: Map of residuals between model and Jason TEC.
@@ -197,7 +198,7 @@ grid.
                                                          save_dir=save_img_dir,
                                                          plot_name='TEC_Residuals')
 
-.. image:: /docs/figures/TEC_Residuals.png
+.. image:: /figures/TEC_Residuals.png
     :width: 300px
     :align: center
     :alt: Residuals between Jason TEC observations and model forecast.

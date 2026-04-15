@@ -125,6 +125,7 @@ obs_data, obs_units, G, obs_info = PyVALION.library.find_G_and_y(atime,
                                                                  raw_data,
                                                                  save_res_dir,
                                                                  name_run,
+                                                                 'bilinear',
                                                                  True)
 
 # Find residuals between the observed data and model forecast
