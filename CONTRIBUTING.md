@@ -68,7 +68,7 @@ To set up `PyVALION` for local development:
 5. You should also check for flake8 style compliance:
 
   ```
-  flake8 . --count --select=D,E,F,H,W --show-source --statistics
+  flake8 ./PyVALION --count --select=D,E,F,H,W --show-source --statistics
   ```
 
   Note that PyVALION uses the `flake-docstrings` and `hacking` packages to ensure
