@@ -60,9 +60,16 @@ doc = [
   "numpydoc",
   "pyproject-parser",
   "sphinx < 9.0",
-  "sphinx_rtd_theme"
+  "sphinx_rtd_theme",
+  "jupyter"
 ]
 
 [project.urls]
 Documentation = "https://pyvalion.readthedocs.io/en/latest/"
 Source = "https://github.com/victoriyaforsythe/PyVALION"
+
+[dependency-groups]
+dev = [
+    "pandas-stubs",
+    "scipy-stubs",
+]

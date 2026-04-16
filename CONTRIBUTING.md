@@ -68,18 +68,38 @@ To set up `PyVALION` for local development:
 5. You should also check for flake8 style compliance:
 
   ```
-  flake8 . --count --select=D,E,F,H,W --show-source --statistics
+  flake8 ./PyVALION --count --select=D,E,F,H,W --show-source --statistics
   ```
 
   Note that PyVALION uses the `flake-docstrings` and `hacking` packages to ensure
   standards in docstring formatting.
 
-
 6. Update/add documentation (in ``docs``), if relevant
 
-7. Add your name to the .zenodo.json file as an author
+7. Make sure that the documentation pages are compilable and renderable. On POSIX
+   systems, this would be
 
-8. Commit your changes:
+  ```shell
+  export READTHEDOCS_OUTPUT=dist/docs
+  python -m sphinx -T -b html -D language=en docs ${READTHEDOCS_OUTPUT}/html
+  ```
+  
+  or on Windows
+
+  ```cmd
+  set READTHEDOCS_OUTPUT=dist\docs
+  python -m sphinx -T -b html -D language=en docs %READTHEDOCS_OUTPUT%\html
+  ```
+
+  Finally, open the documentation pages in your browser of choice. For instance on POSIX
+
+  ```shell
+  firefox ${READTHEDOCS_OUTPUT}/html/index.html
+  ```
+
+8. Add your name to the .zenodo.json file as an author
+
+9. Commit your changes:
   ```
   git add .
   git commit -m "AAA: Brief description of your changes"
@@ -88,13 +108,13 @@ To set up `PyVALION` for local development:
   `PyVALION` follows the [numpy development workflow](https://numpy.org/doc/stable/dev/development_workflow.html),
   see the discussion there for a full list of this shorthand notation.  
 
-9. Once you are happy with the local changes, push to GitHub:
+10. Once you are happy with the local changes, push to GitHub:
   ```
   git push origin name-of-your-bugfix-or-feature
   ```
   Note that each push will trigger the Continuous Integration workflow.
 
-10. Submit a pull request through the GitHub website. Pull requests should be
+11. Submit a pull request through the GitHub website. Pull requests should be
    made to the ``develop`` branch.  Note that automated tests will be run on
    github actions, but these must be initialized by a member of the PyVALION team.
 

@@ -9,22 +9,22 @@
 """
 
 import datetime
-import netCDF4
 import os
 import pickle
 import re
-from siphon.catalog import TDSCatalog
-import subprocess
-from tqdm import tqdm
+from urllib.request import urlcleanup
+from urllib.request import urlretrieve
 
+import netCDF4
 import numpy as np
 import pandas as pd
-
 import PyIRI
+from PyIRI.main_library import adjust_longitude as adjust_lon
+from siphon.catalog import TDSCatalog
+from tqdm import tqdm
+
 import PyVALION
 from PyVALION import logger
-
-from PyIRI.main_library import adjust_longitude as adjust_lon
 
 
 # -----------------------------------------------------------------------------
@@ -67,11 +67,12 @@ def download_GIRO_parameters(time_start,
         Dictionary with all the data combined.
 
     """
+    ion_name = np.asarray(ion_name, dtype=str)
     PyVALION.logger.info(''.join(['Downloading data from GIRO for: ',
                                   time_start.strftime('%Y%m%dT%H%MZ'), '-',
                                   time_finish.strftime('%Y%m%dT%H%MZ')]))
 
-    output_flag = np.empty((ion_name.size), dtype=bool)
+    output_flag = np.empty((ion_name.size,), dtype=bool)
 
     # Open a file that has the names and locations of all GIRO stations
     # This is important because the user might want to reduce the number
@@ -98,26 +99,51 @@ def download_GIRO_parameters(time_start,
         output_file_pic = os.path.join(data_save_dir,
                                        file_name_str + '.p')
 
-        # String for wget in GIRO-desired format
-        url = ''.join((
-            "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=", ionosonde,
-            "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=",
-            time_start.strftime('%Y/%m/%d+%H:%M:%S'), "&toDate=",
-            time_finish.strftime('%Y/%m/%d+%H:%M:%S')))
+        # Retrieve the GIRO text file
+        if not os.path.isfile(output_file_txt):
+            # String for wget in GIRO-desired format
+            url = ''.join(
+                [
+                    "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=",
+                    ionosonde,
+                    "&charName=foF2,foF1,hmF2,hmF1,B0,B1&fromDate=",
+                    time_start.strftime('%Y/%m/%d+%H:%M:%S'), "&toDate=",
+                    time_finish.strftime('%Y/%m/%d+%H:%M:%S')
+                ]
+            )
+            PyVALION.logger.debug(
+                f"Attempting to download of {output_file_txt} from {url}"
+            )
 
-        # Run wget
-        subprocess.run(["wget", "-O", output_file_txt, url, '-q'])
+            n_attempts = 3
+            for attempt in range(1, n_attempts + 1):
+                try:
+                    urlretrieve(url, output_file_txt)
+                    urlcleanup()
+                    break
+                except (Exception,) as exc:
+                    PyVALION.logger.warning(
+                        f"Failed attempt at #{attempt} for {output_file_txt}"
+                        + f" from {url} due to {exc}"
+                    )
+            else:
+                msg = (
+                    f"Unable to download {output_file_txt} from {url} after"
+                    + f" {n_attempts} attempts."
+                )
+                PyVALION.logger.error(msg)
+                raise OSError(msg)
 
         # Empty arrays to concatenate
-        adtime = np.empty((0), dtype=datetime.datetime)
-        ascore = np.empty((0), dtype=float)
-        afof2 = np.empty((0), dtype=float)
-        ahmf2 = np.empty((0), dtype=float)
-        aB0 = np.empty((0), dtype=float)
-        aB1 = np.empty((0), dtype=float)
-        alon = np.empty((0), dtype=float)
-        alat = np.empty((0), dtype=float)
-        acode = np.empty((0), dtype=object)
+        adtime = np.empty((0,), dtype=datetime.datetime)
+        ascore = np.empty((0,), dtype=float)
+        afof2 = np.empty((0,), dtype=float)
+        ahmf2 = np.empty((0,), dtype=float)
+        aB0 = np.empty((0,), dtype=float)
+        aB1 = np.empty((0,), dtype=float)
+        alon = np.empty((0,), dtype=float)
+        alat = np.empty((0,), dtype=float)
+        acode = np.empty((0,), dtype=object)
 
         # Open downloaded .txt GIRO file and read it
         with open(output_file_txt, 'r') as file:
@@ -165,8 +191,8 @@ def download_GIRO_parameters(time_start,
     # The size is the same as the given array ion_name.
 
     # Create new dictionary to store filtered data
-    empty_flt = np.empty((0), dtype=float)
-    empty_str = np.empty((0), dtype=str)
+    empty_flt = np.empty((0,), dtype=float)
+    empty_str = np.empty((0,), dtype=str)
     giro_name_good = {'name': empty_str, 'city': empty_str, 'lat': empty_flt,
                       'lon': empty_flt}
 
@@ -474,6 +500,7 @@ def find_G_and_y(adtime,
     """
 
     # Look for 15/2 min data around
+    adtime = np.asarray(adtime, dtype=object)
     adtime0 = adtime - datetime.timedelta(minutes=15) / 2.
     adtime1 = adtime + datetime.timedelta(minutes=15) / 2.
 
@@ -758,7 +785,7 @@ def download_Jason_TEC(time_start,
     data_all : dict
         Dictionary with all the data combined.
     """
-
+    sat_names = np.asarray(sat_names, dtype=str)
     # Create or update Jason file manifest
     jason_manifest_path = os.path.join(save_dir, jason_manifest_filename)
     create_or_update_manifest(jason_manifest_path)
